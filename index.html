@@ -76,7 +76,8 @@ header p{margin:3px 0 0;font-size:.84rem;color:var(--muted)}
 .sbody{overflow-y:auto;overflow-x:hidden;flex:1}
 .lab{display:block;font-size:.86rem;font-weight:800;margin:12px 0 5px}
 .inp{width:100%;min-width:0;padding:11px 12px;border:1px solid #d1d5db;border-radius:12px;font-size:1rem;background:#fff}
-input[type=date].inp{-webkit-appearance:none;appearance:none;display:block;min-height:48px;text-align:left}
+input[type=date].inp{-webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;min-height:48px;text-align:left}
+input[type=date]::-webkit-date-and-time-value{text-align:left}
 textarea.inp{min-height:5rem;resize:vertical;line-height:1.5}
 /* 교재 */
 .sec{width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:12px 2px;display:flex;gap:10px;align-items:center}
@@ -562,7 +563,7 @@ function openListen() {
       <div class="chips mt">${[10, 20, 30].map(k => `<button class="chip ${n === k ? "on" : ""}" data-n="${k}">${k}문제</button>`).join("")}</div>` : ""}
       ${mode === "card" ? `<div class="chips">${[["all", "전체"], ...decks.map(d => [d, d])].map(([k, l]) => `<button class="chip ${dk === k ? "on" : ""}" data-k="${esc(k)}">${esc(l)}</button>`).join("")}</div>` : ""}
       <label class="lab">읽는 속도</label>
-      <div class="chips">${[[0.8, "느리게"], [1, "보통"], [1.2, "빠르게"]].map(([k, l]) => `<button class="chip ${S.set.rate === k ? "on" : ""}" data-r="${k}">${l}</button>`).join("")}</div>
+      <div class="chips">${[[0.8, "느리게"], [1, "보통"], [1.1, "조금 빠르게"], [1.2, "빠르게"]].map(([k, l]) => `<button class="chip ${S.set.rate === k ? "on" : ""}" data-r="${k}">${l}</button>`).join("")}</div>
       <div class="now" id="now">▶ 시작을 누르세요</div>
       <div class="g2 mt"><button class="btn b-purple" id="lPlay">▶ 시작</button><button class="btn b-gray" id="lStop">⏹ 멈춤</button></div>
       <p class="sm" style="line-height:1.6">📱 아이폰은 화면이 꺼지면 읽기가 멈춰요. 듣는 동안 화면이 켜져 있게 해 볼게요.<br>소리가 안 나면 무음 스위치와 볼륨을 확인하고, 카톡 안이 아닌 사파리·크롬에서 열어 주세요.</p>`;
@@ -605,12 +606,12 @@ function openSettings() {
   const vs = TTS.ok ? speechSynthesis.getVoices().filter(v => /^ko/i.test(v.lang)) : [];
   const solved = Object.keys(S.q).length;
   modal("⚙ 설정", `
-    <label class="lab" style="margin-top:0">📅 시험일</label><input class="inp" type="date" id="sExam" value="${esc(S.set.exam)}">
+    <label class="lab" style="margin-top:0">📅 시험일</label><div style="overflow:hidden;border-radius:12px"><input class="inp" type="date" id="sExam" value="${esc(S.set.exam)}"></div>
     <label class="lab">🎯 하루 목표</label>
     <div class="chips" id="sGoal">${[10, 20, 30, 50].map(k => `<button class="chip ${S.set.goal === k ? "on" : ""}" data-g="${k}">${k}문제</button>`).join("")}</div>
     <label class="lab">🔊 목소리</label>
     ${vs.length ? `<select class="inp" id="sVoice">${vs.map(v => `<option ${v.name === (TTS.voice()?.name) ? "selected" : ""}>${esc(v.name)}</option>`).join("")}</select>` : `<p class="sm">한국어 목소리를 찾지 못했어요. 휴대폰 설정 → 손쉬운 사용(아이폰) 또는 텍스트 음성 변환(갤럭시)에서 한국어 음성을 받아 주세요.</p>`}
-    <div class="chips mt">${[[0.8, "느리게"], [1, "보통"], [1.2, "빠르게"]].map(([k, l]) => `<button class="chip ${S.set.rate === k ? "on" : ""}" data-r="${k}">${l}</button>`).join("")}</div>
+    <div class="chips mt">${[[0.8, "느리게"], [1, "보통"], [1.1, "조금 빠르게"], [1.2, "빠르게"]].map(([k, l]) => `<button class="chip ${S.set.rate === k ? "on" : ""}" data-r="${k}">${l}</button>`).join("")}</div>
     <button class="btn b-gray mt" id="sTest">🔊 목소리 들어 보기</button>
     <label class="lab">💾 백업 (푼 기록 ${solved}문제)</label>
     <button class="btn b-kakao" id="sBk">💬 카톡으로 백업 보내기</button>
