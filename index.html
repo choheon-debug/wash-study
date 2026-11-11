@@ -73,9 +73,10 @@ header p{margin:3px 0 0;font-size:.84rem;color:var(--muted)}
 .sheet-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:10px}
 .sheet-head h3{margin:0;font-size:1.08rem;color:var(--teal-d)}
 .x{border:0;background:none;font-size:1.9rem;line-height:1;color:var(--muted)}
-.sbody{overflow-y:auto;flex:1}
+.sbody{overflow-y:auto;overflow-x:hidden;flex:1}
 .lab{display:block;font-size:.86rem;font-weight:800;margin:12px 0 5px}
 .inp{width:100%;min-width:0;padding:11px 12px;border:1px solid #d1d5db;border-radius:12px;font-size:1rem;background:#fff}
+input[type=date].inp{-webkit-appearance:none;appearance:none;display:block;min-height:48px;text-align:left}
 textarea.inp{min-height:5rem;resize:vertical;line-height:1.5}
 /* 교재 */
 .sec{width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:12px 2px;display:flex;gap:10px;align-items:center}
@@ -177,9 +178,15 @@ const TTS = {
   ok: "speechSynthesis" in window, items: [], i: 0, on: false, timer: 0, wd: 0, lock: null, onStop: null,
   voice() { const vs = speechSynthesis.getVoices().filter(v => /^ko/i.test(v.lang)); return vs.find(v => v.name === S.set.voice) || vs.find(v => /yuna|유나|google/i.test(v.name)) || vs[0] || null; },
   /** items: [{text, el?, pause?(ms), label?}] */
+  unlock() {
+    // 아이폰: 무음 스위치가 켜져 있어도 소리가 나게 '재생' 모드로 바꾸고, 짧은 무음을 한 번 틀어 소리 길을 열어요
+    try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch {}
+    if (!this.unlocked) { this.unlocked = true; try { const a = new Audio(SILENT); a.playsInline = true; a.play().catch(() => {}); } catch {} }
+  },
   play(items, onStop) {
     if (!this.ok) { toast("이 휴대폰은 읽어주기를 지원하지 않아요"); return; }
-    this.stop(true); this.items = items.filter(x => x.text && x.text.trim()); this.i = 0; this.on = true; this.onStop = onStop || null;
+    this.unlock();
+    this.stop(true, true); this.items = items.filter(x => x.text && x.text.trim()); this.i = 0; this.on = true; this.onStop = onStop || null;
     navigator.wakeLock?.request("screen").then(l => this.lock = l).catch(() => {});
     $("#player").hidden = false; this.next();
   },
@@ -195,19 +202,27 @@ const TTS = {
     const speakPart = () => {
       if (!this.on) return;
       if (k >= parts.length) { this.i++; this.timer = setTimeout(() => this.next(), it.pause ?? 250); return; }
-      const u = new SpeechSynthesisUtterance(parts[k++]);
-      u.lang = "ko-KR"; const v = this.voice(); if (v) u.voice = v; u.rate = S.set.rate || 1;
+      const u = this.u = new SpeechSynthesisUtterance(parts[k++]);   // 참조를 붙잡아 둬야 아이폰에서 끝 신호가 와요
+      u.lang = "ko-KR"; const v = this.noVoice ? null : this.voice(); if (v) u.voice = v; u.rate = S.set.rate || 1;
       clearTimeout(this.wd);
       this.wd = setTimeout(() => { if (this.on) { speechSynthesis.cancel(); speakPart(); } }, 4000 + u.text.length * 260 / u.rate);
+      u.onstart = () => { this.started = true; };
       u.onend = () => { clearTimeout(this.wd); speakPart(); };
-      u.onerror = e => { clearTimeout(this.wd); if (e.error !== "interrupted" && e.error !== "canceled") speakPart(); };
+      u.onerror = e => { clearTimeout(this.wd); if (e.error === "voice-unavailable" || e.error === "synthesis-failed") this.noVoice = true; if (e.error !== "interrupted" && e.error !== "canceled") speakPart(); };
+      try { speechSynthesis.resume(); } catch {}
       speechSynthesis.speak(u);
     };
+    if (this.i === 0 && !it.retry) { this.started = false; setTimeout(() => {
+      if (!this.on || this.started) return;
+      if (!this.noVoice) { this.noVoice = true; it.retry = true; try { speechSynthesis.cancel(); } catch {} clearTimeout(this.wd); setTimeout(() => this.next(), 150); return; }   // 고른 목소리가 안 되면 기본 목소리로 다시
+      toast("소리가 안 나면: 볼륨을 올리고, 옆의 무음 스위치를 끄고, 사파리에서 열어 주세요"); }, 2500); }
     speakPart();
   },
-  stop(silent) {
+  stop(silent, soft) {
+    const was = this.on;
     this.on = false; clearTimeout(this.timer); clearTimeout(this.wd);
-    try { speechSynthesis.cancel(); } catch {}
+    // 아이폰은 cancel 직후 바로 말하면 소리가 안 날 때가 있어서, 말하는 중일 때만 멈춰요
+    try { if (!soft || was || speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel(); } catch {}
     document.querySelectorAll(".reading").forEach(e => e.classList.remove("reading"));
     $("#player").hidden = true; this.lock?.release?.().catch(() => {}); this.lock = null;
     if (!silent) { const f = this.onStop; this.onStop = null; f?.(); }
@@ -215,6 +230,10 @@ const TTS = {
 };
 $("#plStop").onclick = () => TTS.stop();
 if (TTS.ok) speechSynthesis.onvoiceschanged = () => {};
+const SILENT = (() => { const n = 800, b = new Uint8Array(44 + n), v = new DataView(b.buffer), w = (o, t) => [...t].forEach((c, i) => b[o + i] = c.charCodeAt(0));
+  w(0, "RIFF"); v.setUint32(4, 36 + n, true); w(8, "WAVEfmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, "data"); v.setUint32(40, n, true); b.fill(128, 44);
+  return "data:audio/wav;base64," + btoa(String.fromCharCode(...b)); })();
 /** 기호·약자를 읽기 좋게 바꿔요 */
 function say(t) {
   return String(t)
