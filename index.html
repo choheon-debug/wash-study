@@ -139,6 +139,7 @@ textarea.inp{min-height:5rem;resize:vertical;line-height:1.5}
 .mnd.l2{background:#ccfbf1;color:#115e59;font-weight:700}
 .mnd.l3{background:#fef3c7;color:#92400e;font-weight:700}
 .mnd.lf{background:#fff;border:1px solid var(--line);padding:7px 9px}
+.mn{font-style:normal;font-size:.72rem;color:#0f766e;flex:none;padding-top:3px}
 .mnd.reading,.mnd.mflash{background:#fef08a!important}
 .mk{position:relative;margin-left:12px;padding-left:12px}
 .mk>.mi{position:relative;padding:.5px 0}
@@ -618,11 +619,31 @@ function viewMind() {
   $("#mQ").oninput = e => { mmQ = e.target.value; hits(); };
   hits();
 }
+const MNK = { "설명": ["설명", "#f0fdfa", "#99f6e4", "#0f766e"], "기출 포인트": ["🎯 기출 포인트", "#fef2f2", "#fecaca", "#ef4444"], "쉬운 예": ["💡 쉬운 예", "#eff6ff", "#bfdbfe", "#3b82f6"], "실제 사례": ["📰 실제 사례", "#fff7ed", "#fed7aa", "#f97316"], "예제": ["✏️ 예제", "#f0fdf4", "#bbf7d0", "#16a34a"] };
+function mmNote(s, p) {
+  const leaves = []; mmWalk(s, "r", (c, q) => { if (!(c.c && c.c.length)) leaves.push(q); });
+  let k = leaves.indexOf(p);
+  modal("💬 요점 설명", `<div id="nb"></div>`, (m, close) => {
+    const draw = () => {
+      const q = leaves[k], n = mmAt(s, q), ps = q.split("."), trail = [];
+      for (let j = 2; j < ps.length; j++) trail.push(mmAt(s, ps.slice(0, j).join(".")).t);
+      m.querySelector("#nb").innerHTML = `<p class="sm" style="margin:0 0 4px">${s.n}절 › ${trail.map(esc).join(" › ")}</p>
+      <div style="font-size:1.12rem;font-weight:800;line-height:1.45;margin-bottom:8px">${esc(n.t)}</div>
+      ${(n.n || []).map(([kk, t]) => { const [l, bg, bd, c] = MNK[kk] || MNK["설명"]; return `<div style="background:${bg};border:1px solid ${bd};border-radius:14px;padding:10px 12px;margin:8px 0;line-height:1.7;font-size:1rem"><span style="display:inline-block;background:${c};color:#fff;font-size:.74rem;font-weight:800;border-radius:6px;padding:1px 7px;margin-right:6px">${l}</span>${esc(t)}</div>`; }).join("") || `<p class="sm">이 요점에는 따로 붙은 설명이 없어요.</p>`}
+      <button class="btn b-purple mt" id="nSay">🔊 읽어 주기</button>
+      <div class="g2 mt">${k > 0 ? `<button class="btn b-gray" id="nPrev">‹ 앞 요점</button>` : "<span></span>"}${k < leaves.length - 1 ? `<button class="btn b-gray" id="nNext">다음 요점 ›</button>` : "<span></span>"}</div>`;
+      m.querySelector("#nSay").onclick = () => TTS.play([{ text: mmSpeak(n.t), label: n.t.slice(0, 40) }, ...(n.n || []).map(([kk, t]) => ({ text: kk === "설명" ? t : `${kk}. ${t}`, label: `💬 ${kk}`, pause: 500 }))]);
+      m.querySelector("#nPrev")?.addEventListener("click", () => { TTS.stop(true); k--; draw(); m.querySelector(".sbody").scrollTop = 0; });
+      m.querySelector("#nNext")?.addEventListener("click", () => { TTS.stop(true); k++; draw(); m.querySelector(".sbody").scrollTop = 0; });
+    };
+    draw(); m.onclose = () => TTS.stop(true);
+  });
+}
 function viewMSec(arg = {}) {
   const s = MM.find(x => x.n === mmSec) || MM[0]; mmSec = s.n;
   const idx = MM.indexOf(s), nq = QS.filter(q => q.c === s.n).length, hasBook = BOOK.some(b => b.n === s.n);
   const list = (n, p, lv) => (n.c || []).map((c, i) => { const q = `${p}.${i}`, has = !!(c.c && c.c.length), o = mmOpen.has(q);
-    return `<div class="mi"><button class="mnd ${has ? "l" + Math.min(lv, 3) : "lf"}" data-p="${q}"><i>${has ? (o ? "▼" : "▶") : "•"}</i><span>${esc(c.t)}</span></button>${has && o ? `<div class="mk">${list(c, q, lv + 1)}</div>` : ""}</div>`; }).join("");
+    return `<div class="mi"><button class="mnd ${has ? "l" + Math.min(lv, 3) : "lf"}" data-p="${q}"><i>${has ? (o ? "▼" : "▶") : "•"}</i><span style="flex:1">${esc(c.t)}</span>${c.n ? `<em class="mn">${c.n.length > 1 ? c.n.length : ""}💬</em>` : ""}</button>${has && o ? `<div class="mk">${list(c, q, lv + 1)}</div>` : ""}</div>`; }).join("");
   const map = (n, p, lv, col) => { const has = !!(n.c && n.c.length), o = mmOpen.has(p) || p === "r";
     const box = p === "r" ? `<span class="mx v0" style="--c:${SCOL[idx % SCOL.length]}">제${s.n}절<br>${esc(s.t)}</span>`
       : `<button class="mx ${lv === 0 ? "v0" : !has ? "vl" : lv === 1 ? "v1" : "v2"}" data-p="${p}">${esc(n.t)}${has && !o ? " ▸" : ""}</button>`;
@@ -637,7 +658,7 @@ function viewMSec(arg = {}) {
   $("#view").innerHTML = head(`제${s.n}절`, esc(s.t), "mind") + `
   <div class="tabs3">${[["list", "📋 목록"], ["map", "🗺 가지 지도"], ["img", "🖼 원본"]].map(([k, l]) => `<button class="${mmMode === k ? "on" : ""}" data-m="${k}">${l}</button>`).join("")}</div>
   ${mmMode === "img" ? "" : `<div class="g2"><button class="btn b-gray" id="mOpen">➕ 모두 펼치기</button><button class="btn b-gray" id="mClose">➖ 모두 접기</button></div>
-  <button class="btn b-purple" id="mListen">🔊 이 절 듣기<small>가지를 누르면 펼치고, 요점을 누르면 읽어 줘요</small></button>`}
+  <button class="btn b-purple" id="mListen">🔊 이 절 듣기<small>가지를 누르면 펼치고, 요점(💬)을 누르면 설명이 나와요</small></button>`}
   ${body}
   <div class="g2">${hasBook ? `<button class="btn b-teal" id="mBook">📖 교재 ${s.n}절</button>` : "<span></span>"}${nq ? `<button class="btn b-blue" id="mQuiz">✏️ 문제 ${Math.min(nq, 20)}개</button>` : ""}</div>
   <div class="g2">${idx > 0 ? `<button class="btn b-gray" id="mPrev">‹ ${MM[idx - 1].n}절</button>` : "<span></span>"}${idx < MM.length - 1 ? `<button class="btn b-gray" id="mNext">${MM[idx + 1].n}절 ›</button>` : ""}</div>`;
@@ -645,10 +666,13 @@ function viewMSec(arg = {}) {
   const V = $("#view"), all = () => { const a = []; mmWalk(s, "r", (c, p) => { if (c.c && c.c.length) a.push(p); }); return a; };
   V.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { mmMode = b.dataset.m; viewMSec(); });
   const items = from => { const a = []; mmWalk(s, "r", (c, p) => a.push({ p, c })); const k = Math.max(0, a.findIndex(x => x.p === from));
-    return (from ? a.slice(k) : [{ p: null, c: { t: `제${s.n}절, ${s.t}` } }, ...a]).map(({ p, c }) => ({ text: mmSpeak(c.t), label: c.t.slice(0, 40), pause: c.c ? 450 : 300, el: p ? V.querySelector(`[data-p="${p}"]`) : null })); };
+    const list = from ? a.slice(k) : [{ p: null, c: { t: `제${s.n}절, ${s.t}` } }, ...a];
+    return list.flatMap(({ p, c }) => { const el = p ? V.querySelector(`[data-p="${p}"]`) : null;
+      return [{ text: mmSpeak(c.t), label: c.t.slice(0, 40), pause: c.c ? 450 : 300, el },
+        ...(c.n || []).map(([kk, t]) => ({ text: kk === "설명" ? t : `${kk}. ${t}`, label: `💬 ${c.t.slice(0, 30)}`, el, pause: 500 }))]; }); };
   V.querySelectorAll("[data-p]").forEach(b => b.onclick = () => { const p = b.dataset.p, n = mmAt(s, p);
     if (n.c && n.c.length) { mmOpen.has(p) ? mmOpen.delete(p) : mmOpen.add(p); const y = scrollY; viewMSec(); scrollTo(0, y); }
-    else TTS.play(items(p)); });
+    else mmNote(s, p); });
   $("#mOpen")?.addEventListener("click", () => { mmOpen = new Set(all()); viewMSec(); });
   $("#mClose")?.addEventListener("click", () => { mmOpen = new Set(); viewMSec(); });
   $("#mListen")?.addEventListener("click", () => { if (mmOpen.size < all().length) { mmOpen = new Set(all()); viewMSec(); } setTimeout(() => $("#mListen") && TTS.play(items(null)), 50); });
