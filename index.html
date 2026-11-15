@@ -329,7 +329,7 @@ function ttsMark(el, seg, from) {
   while ((n = tw.nextNode())) { nodes.push([n, full.length]); full += n.nodeValue; }
   const key = seg.trim(); if (!key) return from;
   let i = full.indexOf(key, from); if (i < 0) i = full.indexOf(key); if (i < 0) { ttsClear(); return from; }
-  const e = i + key.length, words = []; let m; const re = /\S+/g; while ((m = re.exec(key))) words.push([i + m.index, i + m.index + m[0].length, m[0]]);
+  const e = i + key.length, words = []; let m; const re = /\S+/g; while ((m = re.exec(key))) if (!/^([①-⑳]|\d+\.|\(\d+\)|[ⅠⅡⅢⅣⅤ]\.)$/.test(m[0])) words.push([i + m.index, i + m.index + m[0].length, m[0]]);
   TTSW = { nodes, words }; try { CSS.highlights.delete("ttsw"); CSS.highlights.set("tts", new Highlight(ttsRange(nodes, i, e))); } catch {}
   return e;
 }
@@ -627,7 +627,7 @@ function viewSection(arg) {
   <div class="g2">${s.n > 1 ? `<button class="btn b-gray" id="sPrev">‹ ${s.n - 1}절</button>` : "<span></span>"}${s.n < BOOK.length ? `<button class="btn b-gray" id="sNextSec">${s.n + 1}절 ›</button>` : ""}</div>`;
   wireHead();
   const items = from => blocks.map((b, i) => ({ b, i })).slice(from).filter(({ b }) => b.t !== "table").map(({ b, i }) => ({
-    text: b.t === "box" ? `${b.k}. ${b.x}` : b.x, el: $(`#view [data-r="${i}" data-hk="${bk(b)}"]`), label: (b.x || "").slice(0, 36), pause: b.t.startsWith("h") ? 450 : 300 }));
+    text: b.t === "box" ? `${b.k}. ${b.x}` : b.x, el: $(`#view [data-r="${i}"]`), label: (b.x || "").slice(0, 36), pause: b.t.startsWith("h") ? 450 : 300 }));
   $("#sListen").onclick = () => TTS.play(items(0));
   wireHl(() => keepY(() => viewSection(arg)));
   $("#view").querySelectorAll(".book [data-r]").forEach(el => el.onclick = () => { const i = +el.dataset.r;
