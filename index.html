@@ -177,7 +177,8 @@ mark.has-memo::after{content:"📝";font-size:.75em;margin-left:2px;vertical-ali
 .mimg{background:#fff;border-radius:1.4rem;box-shadow:var(--shadow);overflow:auto;-webkit-overflow-scrolling:touch;max-height:70dvh}
 .mimg img{display:block}
 @media (min-width:900px){.wrap,.nav nav{max-width:44rem}}
-::highlight(tts){background-color:#bae6fd;color:inherit}
+::highlight(tts){background-color:#dbeafe;color:inherit}
+::highlight(ttsw){background-color:#7dd3fc;color:inherit}
 </style>
 </head>
 <body>
@@ -253,7 +254,7 @@ const TTS = {
     if (it.el) { it.el.classList.add("reading"); it.el.scrollIntoView({ block: "center", behavior: "smooth" }); }
     $("#plText").textContent = it.label || it.text.slice(0, 40);
     it.onShow?.();
-    const parts = []; ttsSent(it.text).forEach(sg => chunks(say(sg)).forEach((c, j) => parts.push({ t: c, seg: j === 0 ? sg : null }))); let k = 0, hp = 0; ttsClear();
+    const parts = []; ttsSent(it.text).forEach(sg => { let w = 0; chunks(say(sg)).forEach((c, j) => { parts.push({ t: c, seg: j === 0 ? sg : null, w }); w += c.split(/\s+/).filter(Boolean).length; }); }); let k = 0, hp = 0; ttsClear();
     const speakPart = () => {
       if (!this.on) return;
       if (k >= parts.length) { this.i++; this.timer = setTimeout(() => this.next(), it.pause ?? 250); return; }
@@ -263,6 +264,7 @@ const TTS = {
       clearTimeout(this.wd);
       this.wd = setTimeout(() => { if (this.on) { speechSynthesis.cancel(); speakPart(); } }, 4000 + u.text.length * 260 / u.rate);
       u.onstart = () => { this.started = true; };
+      u.onboundary = ev => { if (ev.name && ev.name !== "word") return; ttsWord(pp.w + u.text.slice(0, ev.charIndex).split(/\s+/).filter(Boolean).length); };
       u.onend = () => { clearTimeout(this.wd); speakPart(); };
       u.onerror = e => { clearTimeout(this.wd); if (e.error === "voice-unavailable" || e.error === "synthesis-failed") this.noVoice = true; if (e.error !== "interrupted" && e.error !== "canceled") speakPart(); };
       try { speechSynthesis.resume(); } catch {}
@@ -306,15 +308,19 @@ function say(t) {
 /* 읽는 문장을 옅은 하늘색으로 따라가며 보여 줘요 (글자는 바꾸지 않고 덧칠만) */
 const TTS_HL = (() => { try { return !!(window.CSS && CSS.highlights && window.Highlight); } catch { return false; } })();
 function ttsSent(t) { const a = String(t).match(/[^.!?。]+[.!?。]*["'”’)]*\s*|[.!?。]+\s*/g) || [String(t)]; const out = []; for (const x of a) { if (out.length && out[out.length - 1].trim().length < 6) out[out.length - 1] += x; else out.push(x); } return out; }
-function ttsClear() { try { if (TTS_HL) CSS.highlights.delete("tts"); } catch {} }
+let TTSW = null;
+function ttsClear() { TTSW = null; try { if (TTS_HL) { CSS.highlights.delete("tts"); CSS.highlights.delete("ttsw"); } } catch {} }
+function ttsRange(nodes, i, e) { const at = pos => { for (let j = nodes.length - 1; j >= 0; j--) if (nodes[j][1] <= pos) return [nodes[j][0], Math.min(pos - nodes[j][1], nodes[j][0].nodeValue.length)]; return [nodes[0][0], 0]; }; const r = document.createRange(), [a, ao] = at(i), [b, bo] = at(e); r.setStart(a, ao); r.setEnd(b, bo); return r; }
+/** 지금 읽는 단어 (휴대폰이 단어 위치를 알려 줄 때만) */
+function ttsWord(n) { if (!TTS_HL || !TTSW || !TTSW.words.length) return; const w = TTSW.words[Math.min(n, TTSW.words.length - 1)]; try { CSS.highlights.set("ttsw", new Highlight(ttsRange(TTSW.nodes, w[0], w[1]))); } catch {} }
 function ttsMark(el, seg, from) {
   if (!TTS_HL || !el || !el.isConnected) return from;
   const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), nodes = []; let n, full = "";
   while ((n = tw.nextNode())) { nodes.push([n, full.length]); full += n.nodeValue; }
   const key = seg.trim(); if (!key) return from;
   let i = full.indexOf(key, from); if (i < 0) i = full.indexOf(key); if (i < 0) { ttsClear(); return from; }
-  const e = i + key.length, at = pos => { for (let j = nodes.length - 1; j >= 0; j--) if (nodes[j][1] <= pos) return [nodes[j][0], Math.min(pos - nodes[j][1], nodes[j][0].nodeValue.length)]; return [nodes[0][0], 0]; };
-  try { const r = document.createRange(), [a, ao] = at(i), [b, bo] = at(e); r.setStart(a, ao); r.setEnd(b, bo); CSS.highlights.set("tts", new Highlight(r)); } catch {}
+  const e = i + key.length, words = []; let m; const re = /\S+/g; while ((m = re.exec(key))) words.push([i + m.index, i + m.index + m[0].length]);
+  TTSW = { nodes, words }; try { CSS.highlights.delete("ttsw"); CSS.highlights.set("tts", new Highlight(ttsRange(nodes, i, e))); } catch {}
   return e;
 }
 function chunks(t) {
