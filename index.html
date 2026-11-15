@@ -263,8 +263,7 @@ const TTS = {
       u.lang = "ko-KR"; const v = this.noVoice ? null : this.voice(); if (v) u.voice = v; u.rate = S.set.rate || 1;
       clearTimeout(this.wd);
       this.wd = setTimeout(() => { if (this.on) { speechSynthesis.cancel(); speakPart(); } }, 4000 + u.text.length * 260 / u.rate);
-      u.onstart = () => { this.started = true; ttsWordRun(pp.w); };
-      u.onboundary = ev => { if (ev.name && ev.name !== "word") return; const n = pp.w + u.text.slice(0, ev.charIndex).split(/\s+/).filter(Boolean).length; if (n > ttsWI - 1) ttsWordRun(n); };   // 아이폰은 위치 신호가 엉뚱하게(처음으로) 올 때가 있어서, 앞으로 가는 신호만 써요
+      u.onstart = () => { this.started = true; };
       u.onend = () => { clearTimeout(this.wd); speakPart(); };
       u.onerror = e => { clearTimeout(this.wd); if (e.error === "voice-unavailable" || e.error === "synthesis-failed") this.noVoice = true; if (e.error !== "interrupted" && e.error !== "canceled") speakPart(); };
       try { speechSynthesis.resume(); } catch {}
