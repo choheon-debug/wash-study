@@ -263,8 +263,8 @@ const TTS = {
       u.lang = "ko-KR"; const v = this.noVoice ? null : this.voice(); if (v) u.voice = v; u.rate = S.set.rate || 1;
       clearTimeout(this.wd);
       this.wd = setTimeout(() => { if (this.on) { speechSynthesis.cancel(); speakPart(); } }, 4000 + u.text.length * 260 / u.rate);
-      u.onstart = () => { this.started = true; };
-      u.onboundary = ev => { if (ev.name && ev.name !== "word") return; ttsWord(pp.w + u.text.slice(0, ev.charIndex).split(/\s+/).filter(Boolean).length); };
+      u.onstart = () => { this.started = true; ttsWordRun(pp.w); };
+      u.onboundary = ev => { if (ev.name && ev.name !== "word") return; const n = pp.w + u.text.slice(0, ev.charIndex).split(/\s+/).filter(Boolean).length; if (n !== ttsWI - 1) ttsWordRun(n); };
       u.onend = () => { clearTimeout(this.wd); speakPart(); };
       u.onerror = e => { clearTimeout(this.wd); if (e.error === "voice-unavailable" || e.error === "synthesis-failed") this.noVoice = true; if (e.error !== "interrupted" && e.error !== "canceled") speakPart(); };
       try { speechSynthesis.resume(); } catch {}
@@ -308,8 +308,18 @@ function say(t) {
 /* 읽는 문장을 옅은 하늘색으로 따라가며 보여 줘요 (글자는 바꾸지 않고 덧칠만) */
 const TTS_HL = (() => { try { return !!(window.CSS && CSS.highlights && window.Highlight); } catch { return false; } })();
 function ttsSent(t) { const a = String(t).match(/[^.!?。]+[.!?。]*["'”’)]*\s*|[.!?。]+\s*/g) || [String(t)]; const out = []; for (const x of a) { if (out.length && out[out.length - 1].trim().length < 6) out[out.length - 1] += x; else out.push(x); } return out; }
-let TTSW = null;
-function ttsClear() { TTSW = null; try { if (TTS_HL) { CSS.highlights.delete("tts"); CSS.highlights.delete("ttsw"); } } catch {} }
+let TTSW = null, ttsWT = 0, ttsWI = 0;
+/* 휴대폰이 단어 위치를 안 알려 줘도, 글자 수와 쉼표·마침표 쉼을 계산해 단어를 따라가요 */
+function ttsWordRun(n) {
+  clearTimeout(ttsWT); if (!TTSW || !TTSW.words.length) return; ttsWI = n;
+  const ms = 1000 / (6.2 * (S.set.rate || 1));
+  const step = () => { if (!TTSW || ttsWI >= TTSW.words.length) return; const w = TTSW.words[ttsWI]; ttsWord(ttsWI); ttsWI++;
+    const t = w[2], syl = (t.match(/[가-힣]/g) || []).length + (t.match(/[A-Za-z]/g) || []).length * 0.45 + (t.match(/[0-9]/g) || []).length * 1.6;
+    const pause = /[.!?。]["'”’)]*$/.test(t) ? 480 : /[,，、:;·)]$/.test(t) ? 260 : 40;
+    ttsWT = setTimeout(step, Math.max(160, syl * ms) + pause); };
+  step();
+}
+function ttsClear() { clearTimeout(ttsWT); TTSW = null; try { if (TTS_HL) { CSS.highlights.delete("tts"); CSS.highlights.delete("ttsw"); } } catch {} }
 function ttsRange(nodes, i, e) { const at = pos => { for (let j = nodes.length - 1; j >= 0; j--) if (nodes[j][1] <= pos) return [nodes[j][0], Math.min(pos - nodes[j][1], nodes[j][0].nodeValue.length)]; return [nodes[0][0], 0]; }; const r = document.createRange(), [a, ao] = at(i), [b, bo] = at(e); r.setStart(a, ao); r.setEnd(b, bo); return r; }
 /** 지금 읽는 단어 (휴대폰이 단어 위치를 알려 줄 때만) */
 function ttsWord(n) { if (!TTS_HL || !TTSW || !TTSW.words.length) return; const w = TTSW.words[Math.min(n, TTSW.words.length - 1)]; try { CSS.highlights.set("ttsw", new Highlight(ttsRange(TTSW.nodes, w[0], w[1]))); } catch {} }
@@ -319,7 +329,7 @@ function ttsMark(el, seg, from) {
   while ((n = tw.nextNode())) { nodes.push([n, full.length]); full += n.nodeValue; }
   const key = seg.trim(); if (!key) return from;
   let i = full.indexOf(key, from); if (i < 0) i = full.indexOf(key); if (i < 0) { ttsClear(); return from; }
-  const e = i + key.length, words = []; let m; const re = /\S+/g; while ((m = re.exec(key))) words.push([i + m.index, i + m.index + m[0].length]);
+  const e = i + key.length, words = []; let m; const re = /\S+/g; while ((m = re.exec(key))) words.push([i + m.index, i + m.index + m[0].length, m[0]]);
   TTSW = { nodes, words }; try { CSS.highlights.delete("ttsw"); CSS.highlights.set("tts", new Highlight(ttsRange(nodes, i, e))); } catch {}
   return e;
 }
