@@ -15,3 +15,10 @@
 
 배포: GitHub Pages (Settings → Pages → main / root) → https://choheon-debug.github.io/wash-study/
 사용설명서: https://choheon-debug.github.io/wash-study/guide.html
+
+## 새 학습앱을 만들 때 지킬 것 (사용자 요청)
+새 학습앱은 이 앱(세탁기능사)을 기준으로 만든다.
+- 원 교재에 **표나 그림**이 있으면 빠짐없이 학습앱에 넣는다.
+  - 교재 탭: 표는 표로, 그림은 그림으로 원래 자리에 넣는다.
+  - 마인드맵 탭: 그 내용이 나오는 요점에 📊(표)를 붙여 요점 설명 안에 보여 주고, 누르면 크게 보이게 한다.
+- 교재 문장에 "다음과 같다", "아래 표"라고 되어 있는데 원본에 표가 없으면, 만든 뒤 사용자에게 알려 준다.
