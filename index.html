@@ -196,6 +196,15 @@ mark.has-memo::after{content:"📝";font-size:.75em;margin-left:2px;vertical-ali
 ._tk{text-shadow:0 0 0 transparent}
 ::highlight(tts){background-color:#dbeafe;color:inherit}
 ::highlight(ttsw){background-color:#7dd3fc;color:inherit}
+.tchat{display:flex;flex-direction:column;gap:8px}
+.tb{max-width:88%;padding:10px 12px;border-radius:16px;line-height:1.6;font-size:1rem;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere}
+.tb.ai{align-self:flex-start;background:#f0fdf4;border:1px solid #bbf7d0;border-bottom-left-radius:4px}
+.tb.me{align-self:flex-end;background:#e0f2fe;border:1px solid #bae6fd;border-bottom-right-radius:4px}
+.tv{font-size:.9rem}.tv.correct{color:#15803d}.tv.partial{color:#b45309}.tv.wrong{color:#b91c1c}
+.tref{display:block;margin-top:6px;border:0;background:#fff;border-radius:999px;padding:3px 10px;font:inherit;font-size:.8rem;font-weight:700;color:#0f766e;box-shadow:0 0 0 1px #99f6e4;text-align:left}
+.tsay{float:right;border:0;background:transparent;font-size:1rem;margin:-4px -4px 0 6px}
+.tq{display:block;margin-top:8px;padding:8px 10px;background:#fff;border-radius:10px;border:1px solid #bbf7d0;color:#14532d}
+.tdots{color:var(--muted)}.tdots::after{content:"…";animation:td 1.2s infinite}@keyframes td{50%{opacity:.2}}
 </style>
 </head>
 <body>
@@ -373,7 +382,7 @@ function go(t, arg) {
   if (mock && t !== "mock") { if (!confirm("모의고사를 그만둘까요? 지금까지 푼 것은 저장되지 않아요.")) return; mock = null; }
   if (t !== "mock") stopMock();
   TTS.stop(true); tab = t; nav();
-  ({ home: viewHome, quiz: viewQuizMenu, cards: viewCards, book: viewBook, mind: viewMind, msec: viewMSec, session: viewSession, mock: viewMock, result: viewResult, section: viewSection })[t](arg);
+  ({ home: viewHome, quiz: viewQuizMenu, cards: viewCards, book: viewBook, mind: viewMind, msec: viewMSec, session: viewSession, mock: viewMock, result: viewResult, section: viewSection, tutor: viewTutor })[t](arg);
   scrollTo(0, 0);
 }
 const head = (title, sub, back) => `<header>${back ? `<button class="back" data-back="${back}">‹ 뒤로</button>` : ""}<h1>${title}</h1>${sub ? `<p>${sub}</p>` : ""}<button class="gear" data-set aria-label="설정">⚙</button></header>`;
@@ -399,6 +408,7 @@ function viewHome() {
   <div class="g2"><button class="btn b-blue" id="hMock">📝 모의고사<small>60문항 · 60분</small></button>
   <button class="btn b-orange" id="hWrong" ${w ? "" : "disabled"}>❌ 오답 노트<small>${w}문제</small></button></div>
   <button class="btn b-purple" id="hListen">🎧 듣기 공부<small>화면 안 보고 귀로 공부해요</small></button>
+  <button class="btn b-green" id="hTutor">🤖 AI 튜터와 떠올리기<small>답 대신 질문으로 이끌어요 · 인터넷 필요</small></button>
   <section class="card"><div class="t">📊 과목별 정답률 <span>합격선 60%</span></div>
     ${stats.map(x => `<div class="subj"><b>${SUBJ[x.s]}</b><div class="bar"><i style="width:${x.pct ?? 0}%;background:${x.pct == null ? "#e5e7eb" : x.pct >= 60 ? "var(--green)" : "var(--orange)"}"></i></div><span class="pct">${x.pct == null ? "–" : x.pct + "%"}</span></div>
     <div class="sm" style="margin:2px 0 6px">${SUBJ_SUB[x.s]} · ${x.seen}/${x.tot}문제 풂${weak && weak.s === x.s && x.pct < 60 ? ` → <b style="color:#c2410c">여기부터!</b>` : ""}</div>`).join("")}
@@ -410,6 +420,7 @@ function viewHome() {
   $("#hMock").onclick = () => { if (confirm("모의고사를 시작할까요?\n세 과목 20문제씩 60문항, 60분이에요.")) startMock(); };
   $("#hWrong").onclick = () => startSession(shuffle(wrongIds()), "❌ 오답 노트");
   $("#hListen").onclick = openListen;
+  $("#hTutor").onclick = () => go("tutor");
 }
 function todayList() {
   const need = Math.max(10, (S.set.goal || 20) - todayN());
@@ -957,6 +968,114 @@ function viewMSec(arg = {}) {
   $("#mPrev")?.addEventListener("click", () => { mmSec = MM[idx - 1].n; mmOpen = new Set(); go("msec"); });
   $("#mNext")?.addEventListener("click", () => { mmSec = MM[idx + 1].n; mmOpen = new Set(); go("msec"); });
   if (arg.focus) setTimeout(() => { const el = V.querySelector(`[data-p="${arg.focus}"]`); if (el) { el.classList.add("mflash"); el.scrollIntoView({ block: "center" }); setTimeout(() => el.classList.remove("mflash"), 2500); } }, 30);
+}
+
+/* ---------- 🤖 AI 튜터 ----------
+   교재의 '잘 설계된 AI 튜터' 원칙대로: 튜터는 질문·채점·힌트만, 떠올리는 건 내가.
+   서버(Vercel)가 교재 본문을 근거로 답해요. 키는 서버에만 있어요. */
+const TUTOR_URL = /\.vercel\.app$/.test(location.hostname) ? "/api/tutor" : "https://brain-study-six.vercel.app/api/tutor";
+const TUTOR_N = 5, TUTOR_DAY = 5;
+let tut = null;
+const tutS = () => (S.tutor = S.tutor || { due: [], log: [], day: { d: "", n: 0 } });
+const addDays = (d, n) => { const t = new Date(d + "T00:00:00"); t.setDate(t.getDate() + n); return t.toISOString().slice(0, 10); };
+function viewTutor() {
+  const T = tutS(), usedToday = T.day.d === today() ? T.day.n : 0, dueNow = T.due.filter(x => x.d <= today());
+  if (!tut) {
+    const pick = (window._tutPick = window._tutPick || new Set([1]));
+    $("#view").innerHTML = head("🤖 AI 튜터", "답 대신 질문으로 이끌어요", "home") + `
+    <section class="card"><div class="t">이렇게 공부해요</div>
+      <p class="sm" style="line-height:1.7;margin:0">① 튜터가 질문을 하나 내요 → ② <b>책을 보지 말고</b> 떠올려서 답해요<br>③ 틀리면 정답 대신 <b>힌트</b>를 줘요 → ④ 맞히면 다음 문제<br>⑤ 틀린 문제는 <b>3일 뒤</b> 다시 물어봐요 (간격 복습)</p></section>
+    <section class="card"><div class="t">공부할 절 고르기 <span>3개까지 · 여러 개면 섞어서 내요</span></div>
+      <div class="chips">${BOOK.map(s => `<button class="chip ${pick.has(s.n) ? "on" : ""}" data-ts="${s.n}">${s.n}절</button>`).join("")}</div>
+      <p class="sm" style="margin:8px 0 0">${[...pick].sort((a, b) => a - b).map(n => `${n}절 ${esc(BOOK.find(s => s.n === n).title)}`).join("<br>") || "절을 골라 주세요"}</p></section>
+    ${dueNow.length ? `<p class="sm" style="text-align:center">🔁 3일 전에 틀린 문제 ${dueNow.length}개를 먼저 다시 물어봐요</p>` : ""}
+    <button class="btn b-green" id="tGo" ${pick.size && usedToday < TUTOR_DAY ? "" : "disabled"}>🤖 ${TUTOR_N}문제 시작하기<small>오늘 ${usedToday}/${TUTOR_DAY}번 했어요 · 인터넷이 필요해요</small></button>
+    ${T.log.length ? `<section class="card"><div class="t">최근 기록</div>${T.log.slice(-5).reverse().map(l => `<div class="row"><span class="main">${l.d.slice(5).replace("-", "/")} <span class="sm">${l.secs.map(n => n + "절").join("·")}</span></span><b>${l.ok}/${l.n}</b></div>`).join("")}</section>` : ""}
+    <p class="sm" style="text-align:center;line-height:1.6">AI 채점도 틀릴 수 있어요. 📖 근거 위치를 눌러 교재로 꼭 확인하세요.<br>내가 쓴 답은 채점을 위해 AI 서버로 보내져요. 이름 같은 개인정보는 쓰지 마세요.</p>`;
+    wireHead();
+    $("#view").querySelectorAll("[data-ts]").forEach(b => b.onclick = () => { const n = +b.dataset.ts; pick.has(n) ? pick.delete(n) : pick.size < 3 ? pick.add(n) : toast("3개까지 고를 수 있어요"); viewTutor(); });
+    $("#tGo").onclick = () => {
+      const due = T.due.filter(x => x.d <= today()).slice(0, 3);
+      T.due = T.due.filter(x => !due.includes(x));
+      T.day = { d: today(), n: usedToday + 1 }; save();
+      tut = { secs: [...pick].sort((a, b) => a - b), turns: [], due: due.map(x => x.q), res: [], cur: null, conf: null, busy: false };
+      tutSend("[시작] 첫 문제를 내 주세요.", true);
+    };
+    return;
+  }
+  const done = tut.res.length >= TUTOR_N, last = [...tut.turns].reverse().find(t => t.role === "assistant"), fin = last?.data?.finished;
+  if (done && fin && !tut.saved) tutFinish();
+  const bubbles = tut.turns.filter(t => !t.hidden).map(t => t.role === "user"
+    ? `<div class="tb me">${t.text === "[정답 보기]" ? "💡 정답을 알려 주세요" : esc(t.text)}</div>`
+    : `<div class="tb ai">${t.data.verdict && t.data.verdict !== "none" ? `<b class="tv ${t.data.verdict}">${{ correct: "⭕ 맞았어요", partial: "🔺 반쯤 맞았어요", wrong: "❌ 아직이에요" }[t.data.verdict]}</b><br>` : ""}${esc(t.data.say)}${t.data.verdict === "none" && !t.data.finished && t.data.question && !t.data.say.includes(t.data.question) ? `<b class="tq">❓ ${esc(t.data.question)}</b>` : ""}${t.data.ref && (t.data.verdict !== "none" || t.data.finished) ? `<button class="tref" data-tr="${esc(t.data.ref)}">📖 ${esc(t.data.ref)}</button>` : ""}</div>`).join("");
+  const ok = tut.res.filter(r => r.v === "correct").length;
+  $("#view").innerHTML = head("🤖 AI 튜터", `${tut.secs.map(n => n + "절").join("·")} · ${Math.min(tut.res.length + (fin ? 0 : 1), TUTOR_N)}/${TUTOR_N}문제`, "home") + `
+  <section class="card tchat" id="tChat">${bubbles}${tut.busy ? `<div class="tb ai"><span class="tdots">튜터가 생각 중이에요</span></div>` : ""}</section>
+  ${tut.err && !tut.busy ? `<section class="card" style="border:1px solid #fecaca;background:#fef2f2"><b>⚠️ 튜터와 연결하지 못했어요</b><p class="sm" style="margin:6px 0 10px">${esc(tut.err)}</p><button class="btn b-teal" id="tRetry" style="padding:10px">↻ 다시 시도</button></section>` : ""}
+  ${tut.saved ? tutSummary() : tut.busy || !last ? "" : fin ? `<button class="btn b-green" id="tNext">${done ? "결과 보기" : "다음 문제 ›"}</button>` : `
+  <section class="card">
+    <div class="chips" style="margin-bottom:8px">${[["sure", "😎 자신 있어요"], ["unsure", "🤔 헷갈려요"], ["none", "😶 모르겠어요"]].map(([k, l]) => `<button class="chip ${tut.conf === k ? "on" : ""}" data-tc="${k}">${l}</button>`).join("")}</div>
+    <textarea class="inp" id="tIn" placeholder="책을 보지 말고 떠올려서 답해 보세요">${esc(tut.draft || "")}</textarea>
+    <div class="g2 mt">${window.SpeechRecognition || window.webkitSpeechRecognition ? `<button class="btn b-gray" id="tMic">🎤 말로 답하기</button>` : `<span></span>`}<button class="btn b-teal" id="tSend">보내기</button></div>
+    ${tut.cur && tut.cur.tries > 0 ? `<button class="btn b-gray mt" id="tReveal" style="padding:9px">💡 정답 보기</button>` : ""}
+  </section>`}
+  ${tut.saved ? `<button class="btn b-gray" id="tEnd">처음으로</button>` : `<button class="btn b-gray" id="tQuit" style="padding:9px">그만하기</button>`}`;
+  wireHead();
+  const V = $("#view"), chat = $("#tChat"); chat.lastElementChild?.scrollIntoView({ block: "end" });
+  V.querySelectorAll(".tb.ai").forEach((b, i, a) => { if (i === a.length - 1 && !tut.busy) { const s = document.createElement("button"); s.className = "tsay"; s.textContent = "🔊"; s.onclick = () => TTS.play([{ text: b.innerText.replace(/📖.*$/s, ""), el: b }]); b.prepend(s); } });
+  V.querySelectorAll("[data-tr]").forEach(b => b.onclick = () => { const m = b.dataset.tr.match(/제?(\d+)절/); if (m && BOOK.some(s => s.n === +m[1])) go("section", { n: +m[1], from: "tutor" }); });
+  V.querySelectorAll("[data-tc]").forEach(b => b.onclick = () => { tut.conf = tut.conf === b.dataset.tc ? null : b.dataset.tc; tut.draft = $("#tIn").value; viewTutor(); });
+  $("#tSend")?.addEventListener("click", () => { const v = $("#tIn").value.trim(); if (!v) return toast("떠오르는 만큼 적어 보세요. 모르면 '모르겠어요'도 괜찮아요"); tut.draft = ""; tutSend(v); });
+  $("#tIn")?.addEventListener("input", e => tut.draft = e.target.value);
+  $("#tReveal")?.addEventListener("click", () => tutSend("[정답 보기]"));
+  $("#tRetry")?.addEventListener("click", () => { const r = tut.retry; tut.err = null; if (r) tutSend(r.text, r.hidden); });
+  $("#tNext")?.addEventListener("click", () => done ? (tutFinish(), viewTutor()) : tutSend("[다음 문제]", true));
+  $("#tQuit")?.addEventListener("click", () => { if (confirm("AI 튜터를 그만할까요? 지금까지 푼 문제는 기록돼요.")) { tutFinish(); tut = null; viewTutor(); } });
+  $("#tEnd")?.addEventListener("click", () => { tut = null; viewTutor(); });
+  $("#tMic")?.addEventListener("click", () => {
+    const R = window.SpeechRecognition || window.webkitSpeechRecognition, r = new R(); r.lang = "ko-KR"; r.interimResults = false;
+    const btn = $("#tMic"); btn.textContent = "🎤 듣고 있어요…";
+    r.onresult = e => { const t = e.results[0][0].transcript; const i = $("#tIn"); if (i) { i.value = (i.value ? i.value + " " : "") + t; tut.draft = i.value; } };
+    r.onend = () => { if ($("#tMic")) $("#tMic").textContent = "🎤 말로 답하기"; };
+    r.onerror = () => toast("말을 알아듣지 못했어요. 글로 적어 주세요");
+    try { r.start(); } catch { toast("마이크를 쓸 수 없어요"); }
+  });
+}
+async function tutSend(text, hidden) {
+  if (!tut || tut.busy) return;
+  const isAns = !hidden && text !== "[정답 보기]";
+  tut.turns.push({ role: "user", text, hidden }); tut.busy = true; tut.err = null; viewTutor();
+  try {
+    const r = await fetch(TUTOR_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ app: "wash", secs: tut.secs, turns: tut.turns.map(t => t.role === "user" ? { role: "user", text: t.text } : { role: "assistant", data: t.data }), due: tut.due }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.say) throw new Error(j.error || "튜터 연결에 실패했어요. 인터넷을 확인하고 다시 해 주세요.");
+    tut.turns.push({ role: "assistant", data: j });
+    if (!tut.cur || (j.verdict === "none" && !j.finished)) tut.cur = { q: j.question, tries: 0, v: null, conf: null, ref: j.ref };
+    if (isAns && j.verdict !== "none") { tut.cur.tries++; if (!tut.cur.v) { tut.cur.v = j.verdict; tut.cur.conf = tut.conf; } }
+    if (j.finished && tut.cur && !tut.cur.done) { tut.cur.done = true; tut.res.push({ q: tut.cur.q || j.question, v: tut.cur.v || "wrong", conf: tut.cur.conf, ref: tut.cur.ref || j.ref }); tut.conf = null; }
+  } catch (e) {
+    const u = tut.turns.pop(); if (isAns) tut.draft = u.text;
+    tut.err = e.message === "Failed to fetch" || e.name === "TypeError" ? "서버에 닿지 못했어요. 인터넷 연결을 확인하거나 잠시 뒤 다시 해 주세요." : e.message;
+    tut.retry = isAns ? null : { text, hidden };
+  }
+  tut.busy = false; if (tab === "tutor") viewTutor();
+}
+function tutFinish() {
+  if (!tut || tut.saved || !tut.res.length) { if (tut) tut.saved = true; return; }
+  const T = tutS(); tut.saved = true;
+  tut.res.filter(r => r.v !== "correct").forEach(r => T.due.push({ q: r.q, d: addDays(today(), 3) }));
+  T.due = T.due.slice(-30);
+  T.log.push({ d: today(), secs: tut.secs, n: tut.res.length, ok: tut.res.filter(r => r.v === "correct").length }); T.log = T.log.slice(-50);
+  save();
+}
+function tutSummary() {
+  const R = tut.res, ok = R.filter(r => r.v === "correct").length, over = R.filter(r => r.conf === "sure" && r.v !== "correct").length;
+  return `<section class="card"><div class="t">오늘의 결과</div>
+    <div class="big" style="text-align:center">${ok} / ${R.length}</div>
+    <p class="sm" style="text-align:center;margin:0 0 8px">처음 답에서 맞힌 문제 수예요</p>
+    ${R.map(r => `<div class="row"><span class="main">${{ correct: "⭕", partial: "🔺", wrong: "❌" }[r.v]} ${esc(r.q)}</span><span class="sm">${{ sure: "😎", unsure: "🤔", none: "😶" }[r.conf] || ""}</span></div>`).join("")}
+    ${over ? `<p class="sm" style="color:#c2410c">😎 자신 있었는데 틀린 문제가 ${over}개 있어요. '안다는 느낌'과 실제가 다를 수 있어요 (메타인지, 제5절).</p>` : ""}
+    ${R.some(r => r.v !== "correct") ? `<p class="sm">🔁 틀린 문제는 3일 뒤에 AI 튜터가 다시 물어봐요.</p>` : ""}</section>`;
 }
 
 /* ---------- 🎧 듣기 공부 ---------- */
