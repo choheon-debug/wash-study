@@ -63,8 +63,8 @@ header p{margin:3px 0 0;font-size:.84rem;color:var(--muted)}
 .icon{border:0;background:#eef0f3;border-radius:12px;min-width:44px;height:40px;font-size:1.05rem;padding:0 10px;font-weight:800}
 .icon.on{background:#fef3c7}
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:8px max(10px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 8px) max(10px,env(safe-area-inset-left,0px));pointer-events:none}
-.nav nav{pointer-events:auto;max-width:36rem;margin:0 auto;background:#fff;border-radius:20px;box-shadow:0 4px 18px rgb(0 0 0 / .14);display:grid;grid-template-columns:repeat(5,1fr);padding:5px}
-.nav button{border:0;background:none;border-radius:14px;padding:5px 0;font-size:.74rem;white-space:nowrap;font-weight:800;color:var(--muted);display:flex;flex-direction:column;align-items:center}
+.nav nav{pointer-events:auto;max-width:36rem;margin:0 auto;background:#fff;border-radius:20px;box-shadow:0 4px 18px rgb(0 0 0 / .14);display:grid;grid-template-columns:repeat(6,1fr);padding:5px}
+.nav button{border:0;background:none;border-radius:14px;padding:5px 0;font-size:.7rem;white-space:nowrap;font-weight:800;color:var(--muted);display:flex;flex-direction:column;align-items:center}
 .nav button span{font-size:1.3rem}
 .nav button.on{background:var(--teal-l);color:#115e59}
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);transform:translateX(-50%);background:#1f2937;color:#fff;border-radius:12px;padding:11px 16px;font-size:.92rem;z-index:90;max-width:calc(100% - 32px);text-align:center}
@@ -218,6 +218,7 @@ mark.has-memo::after{content:"📝";font-size:.75em;margin-left:2px;vertical-ali
 .nt:focus{outline:none;background:#fefce8}
 .nsum{border:1.5px solid #0f766e;border-radius:10px;margin:10px 0;overflow:hidden}.nst{padding:8px 10px;font-weight:800;color:#0f766e;border-bottom:1px solid #99f6e4;font-size:.92rem}.nsl{border-bottom:1px solid #cbd5e1}.nsl:last-child{border:0}
 #printArea{display:none}
+.nlist .row{cursor:pointer}
 /* 🖨 인쇄: A4, 칸 높이 1cm */
 @media print{
   @page{size:A4;margin:12mm 12mm 12mm 14mm}
@@ -225,6 +226,7 @@ mark.has-memo::after{content:"📝";font-size:.75em;margin-left:2px;vertical-ali
   body.printing{background:#fff!important;margin:0;padding:0}
   body.printing #printArea{display:block;color:#1f2937;font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #printArea *{box-sizing:border-box}
+  #printArea .psec+.psec{break-before:page}
   #printArea .ph{display:flex;align-items:flex-end;gap:10px;border-bottom:2px solid #0f766e;padding-bottom:2mm;margin-bottom:3mm}#printArea .ph h1{font-size:15pt;margin:0;flex:1;color:#0f766e}#printArea .ph span{font-size:9pt;color:#6b7280;white-space:nowrap}
   #printArea .pgoal{display:grid;grid-template-columns:20mm 1fr;border:1px solid #99f6e4;border-radius:2mm;margin-bottom:4mm;break-inside:avoid}#printArea .pgoal b{display:flex;align-items:center;justify-content:center;text-align:center;font-size:9pt;color:#0f766e;background:#f0fdfa;border-right:1px solid #99f6e4}
   #printArea .pr2 div{height:10mm;display:flex;align-items:center;padding:0 2mm;font-size:10pt;color:#374151;border-bottom:1px solid #ccfbf1}#printArea .pr2 div:last-child{border:0}
@@ -409,14 +411,14 @@ function speakQuestion(q, opts, withAnswer) {
 
 /* ---------- 화면 틀 ---------- */
 let tab = "home";
-const TABS = [["home", "🏠", "홈"], ["mind", "🧠", "마인드맵"], ["quiz", "✏️", "문제"], ["cards", "🃏", "암기카드"], ["book", "📖", "교재"]];
-function nav() { $("#nav").innerHTML = TABS.map(([k, e, l]) => `<button class="${tab === k || ({ msec: "mind", section: "book" })[tab] === k ? "on" : ""}" data-t="${k}"><span>${e}</span>${l}</button>`).join(""); $("#nav").querySelectorAll("button").forEach(b => b.onclick = () => go(b.dataset.t)); }
+const TABS = [["home", "🏠", "홈"], ["mind", "🧠", "마인드맵"], ["quiz", "✏️", "문제"], ["cards", "🃏", "암기카드"], ["book", "📖", "교재"], ["note", "📄", "노트"]];
+function nav() { $("#nav").innerHTML = TABS.map(([k, e, l]) => `<button class="${tab === k || ({ msec: "mind", section: "book", nsec: "note" })[tab] === k ? "on" : ""}" data-t="${k}"><span>${e}</span>${l}</button>`).join(""); $("#nav").querySelectorAll("button").forEach(b => b.onclick = () => go(b.dataset.t)); }
 function go(t, arg) {
   if (t !== tab) hlMode = false;
   if (mock && t !== "mock") { if (!confirm("모의고사를 그만둘까요? 지금까지 푼 것은 저장되지 않아요.")) return; mock = null; }
   if (t !== "mock") stopMock();
   TTS.stop(true); tab = t; nav();
-  ({ home: viewHome, quiz: viewQuizMenu, cards: viewCards, book: viewBook, mind: viewMind, msec: viewMSec, session: viewSession, mock: viewMock, result: viewResult, section: viewSection, tutor: viewTutor, note: viewNote })[t](arg);
+  ({ home: viewHome, quiz: viewQuizMenu, cards: viewCards, book: viewBook, mind: viewMind, msec: viewMSec, session: viewSession, mock: viewMock, result: viewResult, section: viewSection, tutor: viewTutor, note: viewNoteHome, nsec: viewNote })[t](arg);
   scrollTo(0, 0);
 }
 const head = (title, sub, back) => `<header>${back ? `<button class="back" data-back="${back}">‹ 뒤로</button>` : ""}<h1>${title}</h1>${sub ? `<p>${sub}</p>` : ""}<button class="gear" data-set aria-label="설정">⚙</button></header>`;
@@ -701,7 +703,7 @@ function viewSection(arg) {
     TTS.play(items(i)); });
   if (arg.focus != null) setTimeout(() => { const j = blocks.indexOf(s.blocks[arg.focus]), el = $(`#view [data-r="${j}"]`); if (el) { el.scrollIntoView({ block: "center" }); el.classList.add("reading"); setTimeout(() => el.classList.remove("reading"), 2500); } }, 30);
   $("#sOnly").onclick = () => { secOnly = !secOnly; viewSection(arg); };
-  $("#sNote")?.addEventListener("click", () => go("note", { n: s.n, from: "book" }));
+  $("#sNote")?.addEventListener("click", () => go("nsec", { n: s.n, from: "book" }));
   $("#sQuiz")?.addEventListener("click", () => startSession(shuffle(QS.filter(q => q.c === s.n).map(q => q.id)).slice(0, 20), `✏️ ${s.n}절 문제`));
   $("#sPrev")?.addEventListener("click", () => go("section", { n: s.n - 1, from }));
   $("#sNextSec")?.addEventListener("click", () => go("section", { n: s.n + 1, from }));
@@ -1001,7 +1003,7 @@ function viewMSec(arg = {}) {
   $("#zIn")?.addEventListener("click", () => { mmZoom = Math.min(4, mmZoom + 0.5); V.querySelector(".mimg img").style.width = mmZoom * 100 + "%"; toRoot(); });
   $("#zOut")?.addEventListener("click", () => { mmZoom = Math.max(1, mmZoom - 0.5); V.querySelector(".mimg img").style.width = mmZoom * 100 + "%"; toRoot(); });
   $("#mBook")?.addEventListener("click", () => go("section", { n: s.n, from: "msec" }));
-  $("#mNote")?.addEventListener("click", () => go("note", { n: s.n, from: "msec" }));
+  $("#mNote")?.addEventListener("click", () => go("nsec", { n: s.n, from: "msec" }));
   $("#mQuiz")?.addEventListener("click", () => startSession(shuffle(QS.filter(q => q.c === s.n).map(q => q.id)).slice(0, 20), `✏️ ${s.n}절 문제`));
   $("#mPrev")?.addEventListener("click", () => { mmSec = MM[idx - 1].n; mmOpen = new Set(); go("msec"); });
   $("#mNext")?.addEventListener("click", () => { mmSec = MM[idx + 1].n; mmOpen = new Set(); go("msec"); });
@@ -1132,7 +1134,7 @@ function noteRows(s) {
 let noteSec = 1;
 function viewNote(arg = {}) {
   if (arg.n) noteSec = arg.n;
-  const s = MM.find(x => x.n === noteSec) || MM[0], N = noteS(s.n), rows = noteRows(s), from = arg.from || "mind";
+  const s = MM.find(x => x.n === noteSec) || MM[0], N = noteS(s.n), rows = noteRows(s), from = arg.from || "note";
   const ta = (key, val, ph) => `<textarea class="nt" rows="1" data-nk="${key}" placeholder="${ph || ""}">${esc(val || "")}</textarea>`;
   const filled = Object.values(N.r).filter(Boolean).length + Object.values(N.s).flat().filter(Boolean).length;
   $("#view").innerHTML = head(`📄 제${s.n}절 노트`, esc(s.t), from) + `
@@ -1163,21 +1165,39 @@ function viewNote(arg = {}) {
   });
   $("#nPrintB").onclick = () => notePrint(s, false);
   $("#nPrintF").onclick = () => { save(); notePrint(s, true); };
-  $("#nPrev")?.addEventListener("click", () => go("note", { n: MM[MM.indexOf(s) - 1].n, from }));
-  $("#nNextS")?.addEventListener("click", () => go("note", { n: MM[MM.indexOf(s) + 1].n, from }));
+  $("#nPrev")?.addEventListener("click", () => go("nsec", { n: MM[MM.indexOf(s) - 1].n, from }));
+  $("#nNextS")?.addEventListener("click", () => go("nsec", { n: MM[MM.indexOf(s) + 1].n, from }));
   $("#nClear")?.addEventListener("click", () => { if (confirm(`제${s.n}절 노트에 쓴 내용을 모두 지울까요?`)) { delete S.note[s.n]; save(); viewNote(); toast("지웠어요"); } });
 }
+function viewNoteHome() {
+  const cnt = n => { const N = (S.note || {})[n]; return N ? Object.values(N.r).filter(Boolean).length + Object.values(N.s).flat().filter(Boolean).length : 0; };
+  const tot = n => noteRows(MM.find(m => m.n === n)).filter(r => r.k === "row").length;
+  $("#view").innerHTML = head("📄 노트", "코넬식 · 앱에서 쓰고 A4로 인쇄") + `
+  <section class="card"><div class="t">이렇게 써요</div><p class="sm" style="line-height:1.7;margin:0">① 절을 골라 노트를 열어요 → ② 왼쪽 목차를 보고 <b>책을 덮고</b> 오른쪽 칸에 떠올려 써요<br>③ 로마자 목차가 끝나면 <b>요약 3줄</b> → ④ 교재와 비교해 고쳐요 · 쓴 내용은 자동 저장</p></section>
+  <div class="g2"><button class="btn b-gray" id="naB">🖨 전체 빈 노트<small>모든 절 · 칸만</small></button><button class="btn b-teal" id="naF">🖨 전체 쓴 노트<small>모든 절 · 쓴 내용까지</small></button></div>
+  <section class="card nlist"><div class="t">절 고르기 <span>쓴 칸 / 목차 수</span></div>
+    ${MM.map(m => { const c = cnt(m.n), t = tot(m.n); return `<div class="row" data-nn="${m.n}"><span class="main"><b>${m.n}절</b> ${esc(m.t)}</span><span class="sm">${c ? `<b style="color:var(--teal)">${c}</b>/${t}` : `-/${t}`} ›</span></div>`; }).join("")}
+  </section>
+  <p class="sm" style="text-align:center">인쇄할 때는 <b>실제 크기(100%)</b>로 뽑으면 칸이 1cm예요.</p>`;
+  wireHead();
+  $("#view").querySelectorAll("[data-nn]").forEach(r => r.onclick = () => go("nsec", { n: +r.dataset.nn }));
+  $("#naB").onclick = () => notePrint(MM, false);
+  $("#naF").onclick = () => notePrint(MM, true);
+}
 /* 인쇄: 화면 대신 A4 노트만 보이게 해서 인쇄 창을 열어요 */
-function notePrint(s, withText) {
+function notePrintBody(s, withText) {
   const N = noteS(s.n), rows = noteRows(s);
   // 왼쪽 칸에 안 들어가는 긴 목차는 글자를 조금 줄여 두 줄로 (칸 높이는 그대로 1cm)
   const fits = (t, lv) => { const pt = [13, 12, 11.5, 11][lv], avail = (82 - 2) / 0.3528 - lv * 11; let w = 0; for (const ch of t) w += /[가-힣ㄱ-ㅎ①-⑳ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]/.test(ch) ? 1 : 0.56; return w * pt <= avail; };
   const txt = v => withText && v ? esc(v) : "";
-  const body = `<div class="ph"><h1>제${s.n}절 ${esc(s.t)}</h1><span>${withText && N.d ? N.d.replace(/-/g, ". ") : "____년 __월 __일"}</span></div>
+  return `<div class="psec"><div class="ph"><h1>제${s.n}절 ${esc(s.t)}</h1><span>${withText && N.d ? N.d.replace(/-/g, ". ") : "____년 __월 __일"}</span></div>
   <div class="pgoal"><b>오늘의 목표</b><div class="pr2"><div>1. ${txt(N.g[0])}</div><div>2. ${txt(N.g[1])}</div></div></div>
   ${rows.map(r => r.k === "gap" ? `<div class="pr"><div class="pk"></div><div class="pw"></div></div>`
     : r.k === "sum" ? `<div class="psum"><div class="pst"><b>📝 ${esc(r.t)} 요약 3줄</b> <span>— 책 덮고 이 부분 핵심을 세 줄로</span></div>${[0, 1, 2].map(i => `<div class="psl">${txt((N.s[r.q] || [])[i])}</div>`).join("")}</div>`
-    : `<div class="pr${withText ? " fill" : ""}"><div class="pk l${r.lv}${fits(r.t, r.lv) ? "" : " lng"}">${esc(r.t)}</div><div class="pw">${txt(N.r[r.q])}</div></div>`).join("")}`;
+    : `<div class="pr${withText ? " fill" : ""}"><div class="pk l${r.lv}${fits(r.t, r.lv) ? "" : " lng"}">${esc(r.t)}</div><div class="pw">${txt(N.r[r.q])}</div></div>`).join("")}</div>`;
+}
+function notePrint(list, withText) {
+  const body = (Array.isArray(list) ? list : [list]).map(x => notePrintBody(x, withText)).join("");
   let a = document.getElementById("printArea"); if (!a) { a = document.createElement("div"); a.id = "printArea"; document.body.appendChild(a); }
   a.innerHTML = body; document.body.classList.add("printing");
   const done = () => { document.body.classList.remove("printing"); a.innerHTML = ""; window.removeEventListener("afterprint", done); };
