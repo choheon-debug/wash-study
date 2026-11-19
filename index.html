@@ -1194,13 +1194,45 @@ function notePrintBody(s, withText) {
     : r.k === "sum" ? `<div class="psum"><div class="pst"><b>📝 ${esc(r.t)} 요약 3줄</b> <span>— 책 덮고 이 부분 핵심을 세 줄로</span></div>${[0, 1, 2].map(i => `<div class="psl">${txt((N.s[r.q] || [])[i])}</div>`).join("")}</div>`
     : `<div class="pr${withText ? " fill" : ""}"><div class="pk l${r.lv}${fits(r.t, r.lv) ? "" : " lng"}">${esc(r.t)}</div><div class="pw">${txt(N.r[r.q])}</div></div>`).join("")}</div>`;
 }
+const isApp = () => navigator.standalone || matchMedia("(display-mode: standalone)").matches;
 function notePrint(list, withText) {
-  const body = (Array.isArray(list) ? list : [list]).map(x => notePrintBody(x, withText)).join("");
+  list = Array.isArray(list) ? list : [list];
+  /* 홈 화면 앱(아이패드·아이폰)은 인쇄가 막혀 있어서, Safari에서 열 수 있는 인쇄용 주소를 준다 */
+  if (isApp()) return notePrintLink(list, withText);
+  notePrintNow(list, withText);
+}
+function notePrintNow(list, withText) {
+  const body = list.map(x => notePrintBody(x, withText)).join("");
   let a = document.getElementById("printArea"); if (!a) { a = document.createElement("div"); a.id = "printArea"; document.body.appendChild(a); }
   a.innerHTML = body; document.body.classList.add("printing");
-  /* 아이폰·아이패드는 누른 순간 바로 print()를 불러야 인쇄 창이 뜬다. 인쇄용 칸은 화면에는 안 보이니 지우지 않고 둔다 */
+  /* 누른 순간 바로 print() (인쇄용 칸은 화면에 안 보이니 지우지 않고 둔다) */
   try { window.print(); } catch (e) { }
-  if (navigator.standalone || matchMedia("(display-mode: standalone)").matches) setTimeout(() => toast("인쇄 창이 안 뜨면 Safari에서 이 앱 주소를 열고 다시 눌러 주세요"), 800);
+}
+function notePrintLink(list, withText) {
+  const ns = list.map(x => x.n), d = {};
+  if (withText) for (const n of ns) if (S.note?.[n]) d[n] = S.note[n];
+  const url = location.origin + location.pathname + "#print=" + encodeURIComponent(JSON.stringify({ n: ns, f: withText ? 1 : 0, d }));
+  modal("🖨 Safari에서 인쇄하기", `<p>홈 화면 앱에서는 아이패드가 인쇄를 막아요. 아래 버튼을 누르면 <b>Safari</b>에서 인쇄 화면이 열려요.</p>
+    <a class="btn b-teal" id="plGo" href="${esc(url)}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;margin:12px 0">🧭 Safari에서 열기</a>
+    <button class="btn b-gray" id="plCopy">📋 주소 복사하기<small>안 열리면: 복사 → Safari 주소창에 붙여넣기</small></button>`, (m) => {
+    m.querySelector("#plCopy").onclick = async () => { try { await navigator.clipboard.writeText(url); toast("복사했어요. Safari 주소창에 붙여넣어 주세요"); } catch { prompt("이 주소를 길게 눌러 복사하세요", url); } };
+  });
+}
+/* Safari에서 인쇄용 주소로 열렸을 때 */
+function notePrintPage() {
+  let p; try { p = JSON.parse(decodeURIComponent(location.hash.slice(7))); } catch { return false; }
+  const list = (p.n || []).map(n => MM.find(s => s.n === n)).filter(Boolean); if (!list.length) return false;
+  if (p.f) S.note = Object.assign({}, S.note, p.d || {});
+  $("#view").innerHTML = `<header><h1>🖨 노트 인쇄</h1><p>${list.length === 1 ? `제${list[0].n}절 ${esc(list[0].t)}` : `전체 ${list.length}개 절`} · ${p.f ? "쓴 내용까지" : "빈 노트"}</p></header>
+  <div class="card"><button class="btn b-teal" id="ppGo" style="font-size:1.15rem;padding:18px">🖨 인쇄하기</button>
+  <p class="sm mt">인쇄 창이 안 뜨면: 화면 위쪽(또는 아래쪽)의 <b>공유 버튼(□↑)</b> → <b>프린트</b>를 눌러 주세요.<br>프린트 화면에서 <b>PDF로 저장</b>도 할 수 있어요.</p>
+  <p class="sm">인쇄를 마치면 이 Safari 창은 닫아도 돼요.</p></div>`;
+  const body = list.map(x => notePrintBody(x, !!p.f)).join("");
+  let a = document.getElementById("printArea"); if (!a) { a = document.createElement("div"); a.id = "printArea"; document.body.appendChild(a); }
+  a.innerHTML = body; document.body.classList.add("printing");
+  $("#ppGo").onclick = () => { try { window.print(); } catch (e) { } };
+  document.querySelector(".nav").style.display = "none";
+  return true;
 }
 
 /* ---------- 🎧 듣기 공부 ---------- */
@@ -1292,7 +1324,7 @@ function openSettings() {
   });
 }
 
-go("home");
+if (!(location.hash.startsWith("#print=") && notePrintPage())) go("home");
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 </script>
 </body>
