@@ -695,7 +695,7 @@ function viewSection(arg) {
   <p class="sm" style="text-align:center;margin:0">${hlMode ? "칠하기 중에는 읽어 주지 않아요" : "글을 누르면 그 줄부터 읽어 줘요"}</p>
   <section class="card book">${html || `<p class="sm">기출 포인트가 없는 절이에요.</p>`}</section>
   ${nq ? `<button class="btn b-teal" id="sQuiz">✏️ 이 절 문제 ${nq}개 풀기</button>` : ""}
-  ${MM.some(m => m.n === s.n) ? `<button class="btn b-orange" id="sNote">📄 제${s.n}절 노트<small>코넬식 · 앱에서 쓰고 A4로 인쇄</small></button>` : ""}
+  ${MM.some(m => m.n === s.n) ? `<button class="btn b-orange" id="sNote">📄 제${s.n}절 노트<small>코넬식 · 앱에서 쓰고 A4 PDF로 공유</small></button>` : ""}
   <div class="g2">${s.n > 1 ? `<button class="btn b-gray" id="sPrev">‹ ${s.n - 1}절</button>` : "<span></span>"}${s.n < BOOK.length ? `<button class="btn b-gray" id="sNextSec">${s.n + 1}절 ›</button>` : ""}</div>`;
   wireHead();
   const items = from => blocks.map((b, i) => ({ b, i })).slice(from).filter(({ b }) => b.t !== "table").map(({ b, i }) => ({
@@ -963,7 +963,7 @@ function viewMSec(arg = {}) {
   <button class="btn b-purple" id="mListen">🔊 이 절 듣기<small>가지를 누르면 펼치고, 요점(💬)을 누르면 설명이 나와요</small></button>
   ${hlBar()}`}
   ${body}
-  <button class="btn b-orange" id="mNote">📄 제${s.n}절 노트<small>코넬식 · 앱에서 쓰고 A4로 인쇄</small></button>
+  <button class="btn b-orange" id="mNote">📄 제${s.n}절 노트<small>코넬식 · 앱에서 쓰고 A4 PDF로 공유</small></button>
   <div class="g2">${hasBook ? `<button class="btn b-teal" id="mBook">📖 교재 ${s.n}절</button>` : "<span></span>"}${nq ? `<button class="btn b-blue" id="mQuiz">✏️ 문제 ${Math.min(nq, 20)}개</button>` : ""}</div>
   <div class="g2">${idx > 0 ? `<button class="btn b-gray" id="mPrev">‹ ${MM[idx - 1].n}절</button>` : "<span></span>"}${idx < MM.length - 1 ? `<button class="btn b-gray" id="mNext">${MM[idx + 1].n}절 ›</button>` : ""}</div>`;
   wireHead();
@@ -1177,7 +1177,7 @@ function viewNoteHome() {
   const tot = n => noteRows(MM.find(m => m.n === n)).filter(r => r.k === "row").length;
   $("#view").innerHTML = head("📄 노트", "코넬식 · 앱에서 쓰고 A4 PDF로 공유") + `
   <section class="card"><div class="t">이렇게 써요</div><p class="sm" style="line-height:1.7;margin:0">① 절을 골라 노트를 열어요 → ② 왼쪽 목차를 보고 <b>책을 덮고</b> 오른쪽 칸에 떠올려 써요<br>③ 로마자 목차가 끝나면 <b>요약 3줄</b> → ④ 교재와 비교해 고쳐요 · 쓴 내용은 자동 저장</p></section>
-  <div class="g2"><button class="btn b-gray" id="naB">📤 전체 빈 노트<small>모든 절 PDF · 칸만</small></button><button class="btn b-teal" id="naF">📤 전체 쓴 노트<small>모든 절 PDF · 쓴 내용까지</small></button></div>
+  <div class="g2"><button class="btn b-gray" id="naB">📤 전체 빈 노트<small>모든 절 PDF · 칸만</small></button><button class="btn b-teal" id="naF">📤 전체 쓴 노트<small>모든 절 PDF · 쓴 내용</small></button></div>
   <section class="card nlist"><div class="t">절 고르기 <span>쓴 칸 / 목차 수</span></div>
     ${MM.map(m => { const c = cnt(m.n), t = tot(m.n); return `<div class="row" data-nn="${m.n}"><span class="main"><b>${m.n}절</b> ${esc(m.t)}</span><span class="sm">${c ? `<b style="color:var(--teal)">${c}</b>/${t}` : `-/${t}`} ›</span></div>`; }).join("")}
   </section>
