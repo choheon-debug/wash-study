@@ -1198,9 +1198,9 @@ function notePrint(list, withText) {
   const body = (Array.isArray(list) ? list : [list]).map(x => notePrintBody(x, withText)).join("");
   let a = document.getElementById("printArea"); if (!a) { a = document.createElement("div"); a.id = "printArea"; document.body.appendChild(a); }
   a.innerHTML = body; document.body.classList.add("printing");
-  const done = () => { document.body.classList.remove("printing"); a.innerHTML = ""; window.removeEventListener("afterprint", done); };
-  window.addEventListener("afterprint", done);
-  setTimeout(() => { window.print(); setTimeout(() => { if (document.body.classList.contains("printing") && !matchMedia("print").matches) done(); }, 1500); }, 60);
+  /* 아이폰·아이패드는 누른 순간 바로 print()를 불러야 인쇄 창이 뜬다. 인쇄용 칸은 화면에는 안 보이니 지우지 않고 둔다 */
+  try { window.print(); } catch (e) { }
+  if (navigator.standalone || matchMedia("(display-mode: standalone)").matches) setTimeout(() => toast("인쇄 창이 안 뜨면 Safari에서 이 앱 주소를 열고 다시 눌러 주세요"), 800);
 }
 
 /* ---------- 🎧 듣기 공부 ---------- */
