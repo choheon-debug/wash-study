@@ -220,26 +220,30 @@ mark.has-memo::after{content:"📝";font-size:.75em;margin-left:2px;vertical-ali
 #printArea{display:none}
 .nlist .row{cursor:pointer}
 /* 🖨 인쇄: A4, 칸 높이 1cm */
+/* 노트 A4 모양 (인쇄와 PDF 공유가 같이 씀) */
+.pa{color:#1f2937;font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pa *{box-sizing:border-box}
+.pa .psec+.psec{break-before:page}
+.pa .ph{display:flex;align-items:flex-end;gap:10px;border-bottom:2px solid #0f766e;padding-bottom:2mm;margin-bottom:5mm}.pa .ph h1{font-size:15pt;margin:0;flex:1;color:#0f766e}.pa .ph span{font-size:9pt;color:#6b7280;white-space:nowrap}
+.pa .pgoal{display:grid;grid-template-columns:20mm 1fr;border:1px solid #99f6e4;border-radius:2mm;margin-bottom:4mm;break-inside:avoid}.pa .pgoal b{display:flex;align-items:center;justify-content:center;text-align:center;font-size:9pt;color:#0f766e;background:#f0fdfa;border-right:1px solid #99f6e4}
+.pa .pr2 div{height:10mm;display:flex;align-items:center;padding:0 2mm;font-size:10pt;color:#374151;border-bottom:1px solid #ccfbf1}.pa .pr2 div:last-child{border:0}
+.pa .pr{display:grid;grid-template-columns:88mm 1fr;height:10mm;border-bottom:1px solid #cbd5e1;break-inside:avoid}
+.pa .pr:first-of-type{border-top:1px solid #cbd5e1}
+.pa .pr.fill{height:auto;min-height:10mm}
+.pa .pk{border-right:2px solid #ef4444;display:flex;align-items:center;padding-right:2mm;font-weight:800;line-height:1.15;overflow:hidden}
+.pa .pk.l0{font-size:14pt;color:#7c3aed}.pa .pk.l1{font-size:13pt;color:#1d4ed8;padding-left:12pt}.pa .pk.l2{font-size:12.5pt;color:#0f766e;padding-left:24pt}.pa .pk.l3{font-size:12pt;font-weight:700;padding-left:36pt}
+.pa .pn{display:inline-block;width:1.3em;flex:none}
+.pa .pk.lng{font-size:10pt!important}
+.pa .pw{display:flex;align-items:center;padding:1mm 2mm;font-size:10.5pt;line-height:1.35;white-space:pre-wrap;color:#111827}
+.pa .psum{border:1.5px solid #0f766e;border-radius:2mm;margin:4mm 0;padding:0 3mm;break-inside:avoid}
+.pa .pst{height:10mm;display:flex;align-items:center;gap:5px;border-bottom:1px solid #99f6e4;font-size:10pt;color:#0f766e}.pa .pst span{font-size:8pt;color:#6b7280}
+.pa .psl{min-height:10mm;border-bottom:1px solid #cbd5e1;display:flex;align-items:center;font-size:10.5pt;white-space:pre-wrap}.pa .psl:last-child{border:0}
+.pdfgen{position:fixed;left:-10000px;top:0;width:184mm;background:#fff;display:block}.pdfgen .pg{width:184mm;background:#fff}
 @media print{
   @page{size:A4;margin:12mm 12mm 12mm 14mm}
   body.printing>*:not(#printArea){display:none!important}
   body.printing{background:#fff!important;margin:0;padding:0}
-  body.printing #printArea{display:block;color:#1f2937;font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  #printArea *{box-sizing:border-box}
-  #printArea .psec+.psec{break-before:page}
-  #printArea .ph{display:flex;align-items:flex-end;gap:10px;border-bottom:2px solid #0f766e;padding-bottom:2mm;margin-bottom:5mm}#printArea .ph h1{font-size:15pt;margin:0;flex:1;color:#0f766e}#printArea .ph span{font-size:9pt;color:#6b7280;white-space:nowrap}
-  #printArea .pgoal{display:grid;grid-template-columns:20mm 1fr;border:1px solid #99f6e4;border-radius:2mm;margin-bottom:4mm;break-inside:avoid}#printArea .pgoal b{display:flex;align-items:center;justify-content:center;text-align:center;font-size:9pt;color:#0f766e;background:#f0fdfa;border-right:1px solid #99f6e4}
-  #printArea .pr2 div{height:10mm;display:flex;align-items:center;padding:0 2mm;font-size:10pt;color:#374151;border-bottom:1px solid #ccfbf1}#printArea .pr2 div:last-child{border:0}
-  #printArea .pr{display:grid;grid-template-columns:88mm 1fr;height:10mm;border-bottom:1px solid #cbd5e1;break-inside:avoid}
-  #printArea .pr:first-of-type{border-top:1px solid #cbd5e1}
-  #printArea .pr.fill{height:auto;min-height:10mm}
-  #printArea .pk{border-right:2px solid #ef4444;display:flex;align-items:center;padding-right:2mm;font-weight:800;line-height:1.15;overflow:hidden}
-  #printArea .pk.l0{font-size:14pt;color:#7c3aed}#printArea .pk.l1{font-size:13pt;color:#1d4ed8;padding-left:12pt}#printArea .pk.l2{font-size:12.5pt;color:#0f766e;padding-left:24pt}#printArea .pk.l3{font-size:12pt;font-weight:700;padding-left:36pt}
-  #printArea .pk.lng{font-size:10pt!important}
-  #printArea .pw{display:flex;align-items:center;padding:1mm 2mm;font-size:10.5pt;line-height:1.35;white-space:pre-wrap;color:#111827}
-  #printArea .psum{border:1.5px solid #0f766e;border-radius:2mm;margin:4mm 0;padding:0 3mm;break-inside:avoid}
-  #printArea .pst{height:10mm;display:flex;align-items:center;gap:5px;border-bottom:1px solid #99f6e4;font-size:10pt;color:#0f766e}#printArea .pst span{font-size:8pt;color:#6b7280}
-  #printArea .psl{min-height:10mm;border-bottom:1px solid #cbd5e1;display:flex;align-items:center;font-size:10.5pt;white-space:pre-wrap}#printArea .psl:last-child{border:0}
+  body.printing #printArea{display:block}
 }
 </style>
 </head>
@@ -1138,7 +1142,7 @@ function viewNote(arg = {}) {
   const ta = (key, val, ph) => `<textarea class="nt" rows="1" data-nk="${key}" placeholder="${ph || ""}">${esc(val || "")}</textarea>`;
   const filled = Object.values(N.r).filter(Boolean).length + Object.values(N.s).flat().filter(Boolean).length;
   $("#view").innerHTML = head(`📄 제${s.n}절 노트`, esc(s.t), from) + `
-  <div class="g2"><button class="btn b-gray" id="nPrintB">🖨 빈 노트 인쇄<small>칸만 있는 A4</small></button><button class="btn b-teal" id="nPrintF">🖨 쓴 노트 인쇄<small>내가 쓴 내용까지</small></button></div>
+  <div class="g2"><button class="btn b-gray" id="nPrintB">📤 빈 노트 공유<small>A4 PDF · 칸만</small></button><button class="btn b-teal" id="nPrintF">📤 쓴 노트 공유<small>A4 PDF · 쓴 내용까지</small></button></div>
   <p class="sm" style="text-align:center;margin:0">왼쪽 목차를 보고 <b>책을 덮고</b> 오른쪽 칸에 떠올려 써 보세요 · 쓴 칸 ${filled}개 · 자동 저장</p>
   <section class="card note">
     <div class="nhd"><span>날짜</span><input class="nd" type="date" data-nk="d" value="${esc(N.d)}"></div>
@@ -1171,13 +1175,13 @@ function viewNote(arg = {}) {
 function viewNoteHome() {
   const cnt = n => { const N = (S.note || {})[n]; return N ? Object.values(N.r).filter(Boolean).length + Object.values(N.s).flat().filter(Boolean).length : 0; };
   const tot = n => noteRows(MM.find(m => m.n === n)).filter(r => r.k === "row").length;
-  $("#view").innerHTML = head("📄 노트", "코넬식 · 앱에서 쓰고 A4로 인쇄") + `
+  $("#view").innerHTML = head("📄 노트", "코넬식 · 앱에서 쓰고 A4 PDF로 공유") + `
   <section class="card"><div class="t">이렇게 써요</div><p class="sm" style="line-height:1.7;margin:0">① 절을 골라 노트를 열어요 → ② 왼쪽 목차를 보고 <b>책을 덮고</b> 오른쪽 칸에 떠올려 써요<br>③ 로마자 목차가 끝나면 <b>요약 3줄</b> → ④ 교재와 비교해 고쳐요 · 쓴 내용은 자동 저장</p></section>
-  <div class="g2"><button class="btn b-gray" id="naB">🖨 전체 빈 노트<small>모든 절 · 칸만</small></button><button class="btn b-teal" id="naF">🖨 전체 쓴 노트<small>모든 절 · 쓴 내용까지</small></button></div>
+  <div class="g2"><button class="btn b-gray" id="naB">📤 전체 빈 노트<small>모든 절 PDF · 칸만</small></button><button class="btn b-teal" id="naF">📤 전체 쓴 노트<small>모든 절 PDF · 쓴 내용까지</small></button></div>
   <section class="card nlist"><div class="t">절 고르기 <span>쓴 칸 / 목차 수</span></div>
     ${MM.map(m => { const c = cnt(m.n), t = tot(m.n); return `<div class="row" data-nn="${m.n}"><span class="main"><b>${m.n}절</b> ${esc(m.t)}</span><span class="sm">${c ? `<b style="color:var(--teal)">${c}</b>/${t}` : `-/${t}`} ›</span></div>`; }).join("")}
   </section>
-  <p class="sm" style="text-align:center">인쇄할 때는 <b>실제 크기(100%)</b>로 뽑으면 칸이 1cm예요.</p>`;
+  <p class="sm" style="text-align:center">인쇄소에 PDF를 줄 때 <b>A4 · 실제 크기(100%)</b>로 뽑아 달라고 하면 칸이 1cm예요.</p>`;
   wireHead();
   $("#view").querySelectorAll("[data-nn]").forEach(r => r.onclick = () => go("nsec", { n: +r.dataset.nn }));
   $("#naB").onclick = () => notePrint(MM, false);
@@ -1192,31 +1196,76 @@ function notePrintBody(s, withText) {
   return `<div class="psec"><div class="ph"><h1>제${s.n}절 ${esc(s.t)}</h1><span>${withText && N.d ? N.d.replace(/-/g, ". ") : "____년 __월 __일"}</span></div>
   ${rows.map(r => r.k === "gap" ? `<div class="pr"><div class="pk"></div><div class="pw"></div></div>`
     : r.k === "sum" ? `<div class="psum"><div class="pst"><b>📝 ${esc(r.t)} 요약 3줄</b> <span>— 책 덮고 이 부분 핵심을 세 줄로</span></div>${[0, 1, 2].map(i => `<div class="psl">${txt((N.s[r.q] || [])[i])}</div>`).join("")}</div>`
-    : `<div class="pr${withText ? " fill" : ""}"><div class="pk l${r.lv}${fits(r.t, r.lv) ? "" : " lng"}">${esc(r.t)}</div><div class="pw">${txt(N.r[r.q])}</div></div>`).join("")}</div>`;
+    : `<div class="pr${withText ? " fill" : ""}"><div class="pk l${r.lv}${fits(r.t, r.lv) ? "" : " lng"}">${esc(r.t).replace(/^([①-⑳])\s*/, '<span class="pn">$1</span>')}</div><div class="pw">${txt(N.r[r.q])}</div></div>`).join("")}</div>`;
 }
+const APPNAME = "세탁기능사";
 const isApp = () => navigator.standalone || matchMedia("(display-mode: standalone)").matches;
 function notePrint(list, withText) {
   list = Array.isArray(list) ? list : [list];
-  /* 홈 화면 앱(아이패드·아이폰)은 인쇄가 막혀 있어서, Safari에서 열 수 있는 인쇄용 주소를 준다 */
-  if (isApp()) return notePrintLink(list, withText);
-  notePrintNow(list, withText);
+  const name = `${APPNAME}_${list.length === 1 ? `제${list[0].n}절` : "전체"}_${withText ? "쓴노트" : "빈노트"}.pdf`;
+  modal("📤 노트 공유하기", `<p style="margin-top:0">A4 PDF 파일로 만들어요. 카톡·메일로 보내거나 파일에 저장해서 <b>인쇄소</b>에 주면 돼요.</p>
+    <div class="now" id="pdfSt" style="min-height:0">PDF 만드는 중…</div><div id="pdfBtns" style="display:grid;gap:10px;margin-top:12px"></div>`, async (m, close) => {
+    const st = m.querySelector("#pdfSt"), bt = m.querySelector("#pdfBtns");
+    try {
+      const { blob, n } = await notePdf(list, withText, (i, k) => { st.textContent = `PDF 만드는 중… ${i} / ${k}쪽`; });
+      if (!m.isConnected) return;
+      const file = new File([blob], name, { type: "application/pdf" }), url = URL.createObjectURL(blob);
+      const canShare = !!navigator.canShare?.({ files: [file] });
+      st.textContent = `✅ 다 만들었어요 · ${n}쪽 · ${(blob.size / 1048576).toFixed(1)}MB`;
+      bt.innerHTML = (canShare ? `<button class="btn b-teal" id="pdfShare">📤 공유하기<small>카톡 · 메일 · 파일에 저장</small></button>` : "") +
+        `<a class="btn ${canShare ? "b-gray" : "b-teal"}" href="${url}" download="${esc(name)}" style="display:block;text-align:center;text-decoration:none">💾 파일로 저장<small style="display:block">${esc(name)}</small></a>` +
+        (isApp() ? "" : `<button class="btn b-gray" id="pdfPrint">🖨 바로 인쇄</button>`) +
+        `<p class="sm" style="margin:0">인쇄소에는 <b>A4 · 실제 크기(100%)</b>로 뽑아 달라고 하세요. 그래야 칸이 1cm예요.</p>`;
+      m.querySelector("#pdfShare")?.addEventListener("click", () => navigator.share({ files: [file], title: name }).catch(e => { if (e.name !== "AbortError") toast("공유하지 못했어요. '파일로 저장'을 눌러 주세요"); }));
+      m.querySelector("#pdfPrint")?.addEventListener("click", () => { close(); notePrintNow(list, withText); });
+    } catch (e) { console.error(e); st.textContent = "PDF를 만들지 못했어요. 인터넷이 연결됐는지 확인하고 다시 눌러 주세요."; }
+  });
+}
+/* PDF 만들기: 노트를 A4 쪽으로 나눠 그림으로 찍어 넣는다 (글꼴 걱정 없음) */
+let pdfLib;
+function pdfLibs() {
+  return pdfLib ||= Promise.all(["lib/html2canvas.min.js", "lib/jspdf.umd.min.js"].map(src => new Promise((ok, no) => {
+    const t = document.createElement("script"); t.src = src; t.onload = ok; t.onerror = () => { pdfLib = null; no(new Error("load " + src)); }; document.head.appendChild(t);
+  })));
+}
+async function notePdf(list, withText, prog) {
+  await pdfLibs();
+  const box = document.createElement("div"); box.className = "pa pdfgen"; document.body.appendChild(box);
+  try {
+    const px = v => v * 96 / 25.4, H = px(273 - 1), pages = [];
+    for (const s of list) {
+      box.innerHTML = notePrintBody(s, withText);
+      let cur = [], used = 0;
+      const els = [...box.firstElementChild.children];
+      const hOf = el => { if (!el) return 0; const cs = getComputedStyle(el); return el.getBoundingClientRect().height + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom); };
+      els.forEach((el, k) => {
+        const h = hOf(el);
+        const gap = el.classList.contains("pr") && !el.textContent.trim() && !el.classList.contains("fill");
+        const headRow = !!el.querySelector(".pk.l0,.pk.l1,.pk.l2");   /* 제목 줄은 다음 줄과 같은 쪽에 */
+        if (cur.length && used + h + (headRow ? hOf(els[k + 1]) : 0) > H) { while (cur.length && cur[cur.length - 1].gap) cur.pop(); pages.push(cur); cur = []; used = 0; }
+        if (gap && !cur.length) return;   /* 쪽 맨 위 빈 줄은 빼기 */
+        cur.push({ h: el.outerHTML, gap }); used += h;
+      });
+      if (cur.length) pages.push(cur);
+    }
+    const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", compress: true });
+    for (let i = 0; i < pages.length; i++) {
+      box.innerHTML = `<div class="psec pg">${pages[i].map(x => x.h).join("")}</div>`;
+      const c = await html2canvas(box.firstElementChild, { scale: 2.5, backgroundColor: "#ffffff", logging: false });
+      if (i) pdf.addPage();
+      pdf.addImage(c.toDataURL("image/jpeg", 0.85), "JPEG", 14, 12, 184, 184 * c.height / c.width);
+      c.width = c.height = 0; prog(i + 1, pages.length);
+      await new Promise(r => setTimeout(r, 0));
+    }
+    return { blob: pdf.output("blob"), n: pages.length };
+  } finally { box.remove(); }
 }
 function notePrintNow(list, withText) {
   const body = list.map(x => notePrintBody(x, withText)).join("");
-  let a = document.getElementById("printArea"); if (!a) { a = document.createElement("div"); a.id = "printArea"; document.body.appendChild(a); }
+  let a = document.getElementById("printArea"); if (!a) { a = document.createElement("div"); a.id = "printArea"; a.className = "pa"; document.body.appendChild(a); }
   a.innerHTML = body; document.body.classList.add("printing");
   /* 누른 순간 바로 print() (인쇄용 칸은 화면에 안 보이니 지우지 않고 둔다) */
   try { window.print(); } catch (e) { }
-}
-function notePrintLink(list, withText) {
-  const ns = list.map(x => x.n), d = {};
-  if (withText) for (const n of ns) if (S.note?.[n]) d[n] = S.note[n];
-  const url = location.origin + location.pathname + "#print=" + encodeURIComponent(JSON.stringify({ n: ns, f: withText ? 1 : 0, d }));
-  modal("🖨 Safari에서 인쇄하기", `<p>홈 화면 앱에서는 아이패드가 인쇄를 막아요. 아래 버튼을 누르면 <b>Safari</b>에서 인쇄 화면이 열려요.</p>
-    <a class="btn b-teal" id="plGo" href="${esc(url)}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;margin:12px 0">🧭 Safari에서 열기</a>
-    <button class="btn b-gray" id="plCopy">📋 주소 복사하기<small>안 열리면: 복사 → Safari 주소창에 붙여넣기</small></button>`, (m) => {
-    m.querySelector("#plCopy").onclick = async () => { try { await navigator.clipboard.writeText(url); toast("복사했어요. Safari 주소창에 붙여넣어 주세요"); } catch { prompt("이 주소를 길게 눌러 복사하세요", url); } };
-  });
 }
 /* Safari에서 인쇄용 주소로 열렸을 때 */
 function notePrintPage() {
@@ -1228,7 +1277,7 @@ function notePrintPage() {
   <p class="sm mt">인쇄 창이 안 뜨면: 화면 위쪽(또는 아래쪽)의 <b>공유 버튼(□↑)</b> → <b>프린트</b>를 눌러 주세요.<br>프린트 화면에서 <b>PDF로 저장</b>도 할 수 있어요.</p>
   <p class="sm">인쇄를 마치면 이 Safari 창은 닫아도 돼요.</p></div>`;
   const body = list.map(x => notePrintBody(x, !!p.f)).join("");
-  let a = document.getElementById("printArea"); if (!a) { a = document.createElement("div"); a.id = "printArea"; document.body.appendChild(a); }
+  let a = document.getElementById("printArea"); if (!a) { a = document.createElement("div"); a.id = "printArea"; a.className = "pa"; document.body.appendChild(a); }
   a.innerHTML = body; document.body.classList.add("printing");
   $("#ppGo").onclick = () => { try { window.print(); } catch (e) { } };
   document.querySelector(".nav").style.display = "none";
