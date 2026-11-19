@@ -1006,6 +1006,8 @@ function viewMSec(arg = {}) {
 /* ---------- 📄 코넬식 노트 ----------
    마인드맵 목차로 만든 A4 노트. 앱에서 직접 쓰고(휴대폰에 저장), 빈 노트나 쓴 노트를 그대로 인쇄해요.
    인쇄는 칸 높이 1cm, ①② 요점 11포인트, 단계마다 한 글자 들여쓰기, 로마자 목차마다 요약 3줄. */
+function NSEC() { return MM; }                 /* 노트로 쓰는 절 목록 (앱마다 다를 수 있음) */
+const nLbl = s => s.k || `제${s.n}절`;          /* 화면에 보이는 절 이름 */
 const noteS = n => { S.note = S.note || {}; return (S.note[n] = S.note[n] || { d: "", g: ["", ""], r: {}, s: {} }); };
 function noteRows(s) {
   const out = []; let cur = null;
@@ -1018,11 +1020,12 @@ function noteRows(s) {
 }
 let noteSec = 1;
 function viewNote(arg = {}) {
+  if (!window.MM) return mmWait("nsec", () => viewNote(arg));
   if (arg.n) noteSec = arg.n;
-  const s = MM.find(x => x.n === noteSec) || MM[0], N = noteS(s.n), rows = noteRows(s), from = arg.from || "note";
+  const s = NSEC().find(x => x.n === noteSec) || NSEC()[0], N = noteS(s.n), rows = noteRows(s), from = arg.from || "note";
   const ta = (key, val, ph) => `<textarea class="nt" rows="1" data-nk="${key}" placeholder="${ph || ""}">${esc(val || "")}</textarea>`;
   const filled = Object.values(N.r).filter(Boolean).length + Object.values(N.s).flat().filter(Boolean).length;
-  $("#view").innerHTML = head(`📄 제${s.n}절 노트`, esc(s.t), from) + `
+  $("#view").innerHTML = head(`${nLbl(s).length > 5 ? "" : "📄 "}${nLbl(s)} 노트`, esc(s.t), from) + `
   <div class="g2"><button class="btn b-gray" id="nPrintB">📤 빈 노트 공유<small>A4 PDF · 칸만</small></button><button class="btn b-teal" id="nPrintF">📤 쓴 노트 공유<small>A4 PDF · 쓴 내용까지</small></button></div>
   <p class="sm" style="text-align:center;margin:0">왼쪽 목차를 보고 <b>책을 덮고</b> 오른쪽 칸에 떠올려 써 보세요 · 쓴 칸 ${filled}개 · 자동 저장</p>
   <section class="card note">
@@ -1031,7 +1034,7 @@ function viewNote(arg = {}) {
       : r.k === "sum" ? `<div class="nsum"><div class="nst">📝 ${esc(r.t)} 요약 3줄 <span class="sm">— 책 덮고 핵심을 세 줄로</span></div>${[0, 1, 2].map(i => `<div class="nsl">${ta(`s:${r.q}:${i}`, (N.s[r.q] || [])[i], "")}</div>`).join("")}</div>`
       : `<div class="nr"><div class="nk l${r.lv}">${esc(r.t)}</div><div class="nw">${ta(`r:${r.q}`, N.r[r.q], r.leaf ? "떠올려 쓰기" : "")}</div></div>`).join("")}</div>
   </section>
-  <div class="g2">${MM.indexOf(s) > 0 ? `<button class="btn b-gray" id="nPrev">‹ ${MM[MM.indexOf(s) - 1].n}절 노트</button>` : "<span></span>"}${MM.indexOf(s) < MM.length - 1 ? `<button class="btn b-gray" id="nNextS">${MM[MM.indexOf(s) + 1].n}절 노트 ›</button>` : ""}</div>
+  <div class="g2">${NSEC().indexOf(s) > 0 ? `<button class="btn b-gray" id="nPrev">‹ ${nLbl(NSEC()[NSEC().indexOf(s) - 1])} 노트</button>` : "<span></span>"}${NSEC().indexOf(s) < NSEC().length - 1 ? `<button class="btn b-gray" id="nNextS">${nLbl(NSEC()[NSEC().indexOf(s) + 1])} 노트 ›</button>` : ""}</div>
   ${filled ? `<button class="btn b-gray" id="nClear" style="padding:9px">🗑 이 절 노트 지우기</button>` : ""}`;
   wireHead();
   const V = $("#view"), grow = t => { t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; };
@@ -1049,24 +1052,25 @@ function viewNote(arg = {}) {
   });
   $("#nPrintB").onclick = () => notePrint(s, false);
   $("#nPrintF").onclick = () => { save(); notePrint(s, true); };
-  $("#nPrev")?.addEventListener("click", () => go("nsec", { n: MM[MM.indexOf(s) - 1].n, from }));
-  $("#nNextS")?.addEventListener("click", () => go("nsec", { n: MM[MM.indexOf(s) + 1].n, from }));
-  $("#nClear")?.addEventListener("click", () => { if (confirm(`제${s.n}절 노트에 쓴 내용을 모두 지울까요?`)) { delete S.note[s.n]; save(); viewNote(); toast("지웠어요"); } });
+  $("#nPrev")?.addEventListener("click", () => go("nsec", { n: NSEC()[NSEC().indexOf(s) - 1].n, from }));
+  $("#nNextS")?.addEventListener("click", () => go("nsec", { n: NSEC()[NSEC().indexOf(s) + 1].n, from }));
+  $("#nClear")?.addEventListener("click", () => { if (confirm(`${nLbl(s)} 노트에 쓴 내용을 모두 지울까요?`)) { delete S.note[s.n]; save(); viewNote(); toast("지웠어요"); } });
 }
 function viewNoteHome() {
+  if (!window.MM) return mmWait("note", viewNoteHome);
   const cnt = n => { const N = (S.note || {})[n]; return N ? Object.values(N.r).filter(Boolean).length + Object.values(N.s).flat().filter(Boolean).length : 0; };
-  const tot = n => noteRows(MM.find(m => m.n === n)).filter(r => r.k === "row").length;
+  const tot = n => noteRows(NSEC().find(m => m.n === n)).filter(r => r.k === "row").length;
   $("#view").innerHTML = head("📄 노트", "코넬식 · 앱에서 쓰고 A4 PDF로 공유") + `
   <section class="card"><div class="t">이렇게 써요</div><p class="sm" style="line-height:1.7;margin:0">① 절을 골라 노트를 열어요 → ② 왼쪽 목차를 보고 <b>책을 덮고</b> 오른쪽 칸에 떠올려 써요<br>③ 로마자 목차가 끝나면 <b>요약 3줄</b> → ④ 교재와 비교해 고쳐요 · 쓴 내용은 자동 저장</p></section>
   <div class="g2"><button class="btn b-gray" id="naB">📤 전체 빈 노트<small>모든 절 PDF · 칸만</small></button><button class="btn b-teal" id="naF">📤 전체 쓴 노트<small>모든 절 PDF · 쓴 내용</small></button></div>
   <section class="card nlist"><div class="t">절 고르기 <span>쓴 칸 / 목차 수</span></div>
-    ${MM.map(m => { const c = cnt(m.n), t = tot(m.n); return `<div class="row" data-nn="${m.n}"><span class="main"><b>${m.n}절</b> ${esc(m.t)}</span><span class="sm">${c ? `<b style="color:var(--teal)">${c}</b>/${t}` : `-/${t}`} ›</span></div>`; }).join("")}
+    ${NSEC().map(m => { const c = cnt(m.n), t = tot(m.n); return `<div class="row" data-nn="${m.n}"><span class="main"><b>${nLbl(m)}</b> ${esc(m.t)}</span><span class="sm">${c ? `<b style="color:var(--teal)">${c}</b>/${t}` : `-/${t}`} ›</span></div>`; }).join("")}
   </section>
   <p class="sm" style="text-align:center">인쇄소에 PDF를 줄 때 <b>A4 · 실제 크기(100%)</b>로 뽑아 달라고 하면 칸이 1cm예요.</p>`;
   wireHead();
   $("#view").querySelectorAll("[data-nn]").forEach(r => r.onclick = () => go("nsec", { n: +r.dataset.nn }));
-  $("#naB").onclick = () => notePrint(MM, false);
-  $("#naF").onclick = () => notePrint(MM, true);
+  $("#naB").onclick = () => notePrint(NSEC(), false);
+  $("#naF").onclick = () => notePrint(NSEC(), true);
 }
 /* 인쇄: 화면 대신 A4 노트만 보이게 해서 인쇄 창을 열어요 */
 function notePrintBody(s, withText) {
@@ -1074,7 +1078,7 @@ function notePrintBody(s, withText) {
   // 왼쪽 칸에 안 들어가는 긴 목차는 글자를 조금 줄여 두 줄로 (칸 높이는 그대로 1cm)
   const fits = (t, lv) => { const pt = [14, 13, 12.5, 12][lv], avail = (88 - 2) / 0.3528 - lv * 12; let w = 0; for (const ch of t) w += /[가-힣ㄱ-ㅎ①-⑳ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]/.test(ch) ? 1 : 0.56; return w * pt <= avail; };
   const txt = v => withText && v ? esc(v) : "";
-  return `<div class="psec"><div class="ph"><h1>제${s.n}절 ${esc(s.t)}</h1><span>${withText && N.d ? N.d.replace(/-/g, ". ") : "____년 __월 __일"}</span></div>
+  return `<div class="psec"><div class="ph"><h1>${esc(nLbl(s))} ${esc(s.t)}</h1><span>${withText && N.d ? N.d.replace(/-/g, ". ") : "____년 __월 __일"}</span></div>
   ${rows.map(r => r.k === "gap" ? `<div class="pr"><div class="pk"></div><div class="pw"></div></div>`
     : r.k === "sum" ? `<div class="psum"><div class="pst"><b>📝 ${esc(r.t)} 요약 3줄</b> <span>— 책 덮고 이 부분 핵심을 세 줄로</span></div>${[0, 1, 2].map(i => `<div class="psl">${txt((N.s[r.q] || [])[i])}</div>`).join("")}</div>`
     : `<div class="pr${withText ? " fill" : ""}"><div class="pk l${r.lv}${fits(r.t, r.lv) ? "" : " lng"}">${esc(r.t).replace(/^([①-⑳])\s*/, '<span class="pn">$1</span>')}</div><div class="pw">${txt(N.r[r.q])}</div></div>`).join("")}</div>`;
@@ -1083,9 +1087,9 @@ const APPNAME = "세탁기능사";
 const isApp = () => navigator.standalone || matchMedia("(display-mode: standalone)").matches;
 function notePrint(list, withText) {
   list = Array.isArray(list) ? list : [list];
-  const name = `${APPNAME}_${list.length === 1 ? `제${list[0].n}절` : "전체"}_${withText ? "쓴노트" : "빈노트"}.pdf`;
+  const name = `${APPNAME}_${list.length === 1 ? nLbl(list[0]).replace(/\s+/g, "") : "전체"}_${withText ? "쓴노트" : "빈노트"}.pdf`;
   modal("📤 노트 공유하기", `<p style="margin-top:0">A4 PDF 파일로 만들어요. 카톡·메일로 보내거나 파일에 저장해서 <b>인쇄소</b>에 주면 돼요.</p>
-    <div class="now" id="pdfSt" style="min-height:0">PDF 만드는 중…</div><div id="pdfBtns" style="display:grid;gap:10px;margin-top:12px"></div>`, async (m, close) => {
+    <div class="now" id="pdfSt" style="min-height:0">PDF 만드는 중…${list.length > 20 ? "<br><small>쪽수가 많아서 1분쯤 걸릴 수 있어요. 화면을 끄지 말고 기다려 주세요.</small>" : ""}</div><div id="pdfBtns" style="display:grid;gap:10px;margin-top:12px"></div>`, async (m, close) => {
     const st = m.querySelector("#pdfSt"), bt = m.querySelector("#pdfBtns");
     try {
       const { blob, n } = await notePdf(list, withText, (i, k) => { st.textContent = `PDF 만드는 중… ${i} / ${k}쪽`; });
@@ -1132,9 +1136,9 @@ async function notePdf(list, withText, prog) {
     const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", compress: true });
     for (let i = 0; i < pages.length; i++) {
       box.innerHTML = `<div class="psec pg">${pages[i].map(x => x.h).join("")}</div>`;
-      const c = await html2canvas(box.firstElementChild, { scale: 2.5, backgroundColor: "#ffffff", logging: false });
+      const c = await html2canvas(box.firstElementChild, { scale: list.length > 20 ? 2 : 2.5, backgroundColor: "#ffffff", logging: false });
       if (i) pdf.addPage();
-      pdf.addImage(c.toDataURL("image/jpeg", 0.85), "JPEG", 14, 12, 184, 184 * c.height / c.width);
+      pdf.addImage(c.toDataURL("image/jpeg", list.length > 20 ? 0.75 : 0.85), "JPEG", 14, 12, 184, 184 * c.height / c.width);
       c.width = c.height = 0; prog(i + 1, pages.length);
       await new Promise(r => setTimeout(r, 0));
     }
@@ -1151,9 +1155,9 @@ function notePrintNow(list, withText) {
 /* Safari에서 인쇄용 주소로 열렸을 때 */
 function notePrintPage() {
   let p; try { p = JSON.parse(decodeURIComponent(location.hash.slice(7))); } catch { return false; }
-  const list = (p.n || []).map(n => MM.find(s => s.n === n)).filter(Boolean); if (!list.length) return false;
+  const list = (p.n || []).map(n => NSEC().find(s => s.n === n)).filter(Boolean); if (!list.length) return false;
   if (p.f) S.note = Object.assign({}, S.note, p.d || {});
-  $("#view").innerHTML = `<header><h1>🖨 노트 인쇄</h1><p>${list.length === 1 ? `제${list[0].n}절 ${esc(list[0].t)}` : `전체 ${list.length}개 절`} · ${p.f ? "쓴 내용까지" : "빈 노트"}</p></header>
+  $("#view").innerHTML = `<header><h1>🖨 노트 인쇄</h1><p>${list.length === 1 ? `${esc(nLbl(list[0]))} ${esc(list[0].t)}` : `전체 ${list.length}개 절`} · ${p.f ? "쓴 내용까지" : "빈 노트"}</p></header>
   <div class="card"><button class="btn b-teal" id="ppGo" style="font-size:1.15rem;padding:18px">🖨 인쇄하기</button>
   <p class="sm mt">인쇄 창이 안 뜨면: 화면 위쪽(또는 아래쪽)의 <b>공유 버튼(□↑)</b> → <b>프린트</b>를 눌러 주세요.<br>프린트 화면에서 <b>PDF로 저장</b>도 할 수 있어요.</p>
   <p class="sm">인쇄를 마치면 이 Safari 창은 닫아도 돼요.</p></div>`;
