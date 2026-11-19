@@ -227,15 +227,15 @@ mark.has-memo::after{content:"📝";font-size:.75em;margin-left:2px;vertical-ali
   body.printing #printArea{display:block;color:#1f2937;font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #printArea *{box-sizing:border-box}
   #printArea .psec+.psec{break-before:page}
-  #printArea .ph{display:flex;align-items:flex-end;gap:10px;border-bottom:2px solid #0f766e;padding-bottom:2mm;margin-bottom:3mm}#printArea .ph h1{font-size:15pt;margin:0;flex:1;color:#0f766e}#printArea .ph span{font-size:9pt;color:#6b7280;white-space:nowrap}
+  #printArea .ph{display:flex;align-items:flex-end;gap:10px;border-bottom:2px solid #0f766e;padding-bottom:2mm;margin-bottom:5mm}#printArea .ph h1{font-size:15pt;margin:0;flex:1;color:#0f766e}#printArea .ph span{font-size:9pt;color:#6b7280;white-space:nowrap}
   #printArea .pgoal{display:grid;grid-template-columns:20mm 1fr;border:1px solid #99f6e4;border-radius:2mm;margin-bottom:4mm;break-inside:avoid}#printArea .pgoal b{display:flex;align-items:center;justify-content:center;text-align:center;font-size:9pt;color:#0f766e;background:#f0fdfa;border-right:1px solid #99f6e4}
   #printArea .pr2 div{height:10mm;display:flex;align-items:center;padding:0 2mm;font-size:10pt;color:#374151;border-bottom:1px solid #ccfbf1}#printArea .pr2 div:last-child{border:0}
-  #printArea .pr{display:grid;grid-template-columns:82mm 1fr;height:10mm;border-bottom:1px solid #cbd5e1;break-inside:avoid}
+  #printArea .pr{display:grid;grid-template-columns:88mm 1fr;height:10mm;border-bottom:1px solid #cbd5e1;break-inside:avoid}
   #printArea .pr:first-of-type{border-top:1px solid #cbd5e1}
   #printArea .pr.fill{height:auto;min-height:10mm}
   #printArea .pk{border-right:2px solid #ef4444;display:flex;align-items:center;padding-right:2mm;font-weight:800;line-height:1.15;overflow:hidden}
-  #printArea .pk.l0{font-size:13pt;color:#7c3aed}#printArea .pk.l1{font-size:12pt;color:#1d4ed8;padding-left:11pt}#printArea .pk.l2{font-size:11.5pt;color:#0f766e;padding-left:22pt}#printArea .pk.l3{font-size:11pt;font-weight:700;padding-left:33pt}
-  #printArea .pk.lng{font-size:9.5pt!important}
+  #printArea .pk.l0{font-size:14pt;color:#7c3aed}#printArea .pk.l1{font-size:13pt;color:#1d4ed8;padding-left:12pt}#printArea .pk.l2{font-size:12.5pt;color:#0f766e;padding-left:24pt}#printArea .pk.l3{font-size:12pt;font-weight:700;padding-left:36pt}
+  #printArea .pk.lng{font-size:10pt!important}
   #printArea .pw{display:flex;align-items:center;padding:1mm 2mm;font-size:10.5pt;line-height:1.35;white-space:pre-wrap;color:#111827}
   #printArea .psum{border:1.5px solid #0f766e;border-radius:2mm;margin:4mm 0;padding:0 3mm;break-inside:avoid}
   #printArea .pst{height:10mm;display:flex;align-items:center;gap:5px;border-bottom:1px solid #99f6e4;font-size:10pt;color:#0f766e}#printArea .pst span{font-size:8pt;color:#6b7280}
@@ -1142,7 +1142,6 @@ function viewNote(arg = {}) {
   <p class="sm" style="text-align:center;margin:0">왼쪽 목차를 보고 <b>책을 덮고</b> 오른쪽 칸에 떠올려 써 보세요 · 쓴 칸 ${filled}개 · 자동 저장</p>
   <section class="card note">
     <div class="nhd"><span>날짜</span><input class="nd" type="date" data-nk="d" value="${esc(N.d)}"></div>
-    <div class="ngoal"><b>오늘의<br>목표</b><div>${ta("g0", N.g[0], "1.")}</div><div>${ta("g1", N.g[1], "2.")}</div></div>
     <div class="ngrid">${rows.map(r => r.k === "gap" ? `<div class="nr gap"><div></div><div></div></div>`
       : r.k === "sum" ? `<div class="nsum"><div class="nst">📝 ${esc(r.t)} 요약 3줄 <span class="sm">— 책 덮고 핵심을 세 줄로</span></div>${[0, 1, 2].map(i => `<div class="nsl">${ta(`s:${r.q}:${i}`, (N.s[r.q] || [])[i], "")}</div>`).join("")}</div>`
       : `<div class="nr"><div class="nk l${r.lv}">${esc(r.t)}</div><div class="nw">${ta(`r:${r.q}`, N.r[r.q], r.leaf ? "떠올려 쓰기" : "")}</div></div>`).join("")}</div>
@@ -1188,10 +1187,9 @@ function viewNoteHome() {
 function notePrintBody(s, withText) {
   const N = noteS(s.n), rows = noteRows(s);
   // 왼쪽 칸에 안 들어가는 긴 목차는 글자를 조금 줄여 두 줄로 (칸 높이는 그대로 1cm)
-  const fits = (t, lv) => { const pt = [13, 12, 11.5, 11][lv], avail = (82 - 2) / 0.3528 - lv * 11; let w = 0; for (const ch of t) w += /[가-힣ㄱ-ㅎ①-⑳ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]/.test(ch) ? 1 : 0.56; return w * pt <= avail; };
+  const fits = (t, lv) => { const pt = [14, 13, 12.5, 12][lv], avail = (88 - 2) / 0.3528 - lv * 12; let w = 0; for (const ch of t) w += /[가-힣ㄱ-ㅎ①-⑳ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]/.test(ch) ? 1 : 0.56; return w * pt <= avail; };
   const txt = v => withText && v ? esc(v) : "";
   return `<div class="psec"><div class="ph"><h1>제${s.n}절 ${esc(s.t)}</h1><span>${withText && N.d ? N.d.replace(/-/g, ". ") : "____년 __월 __일"}</span></div>
-  <div class="pgoal"><b>오늘의 목표</b><div class="pr2"><div>1. ${txt(N.g[0])}</div><div>2. ${txt(N.g[1])}</div></div></div>
   ${rows.map(r => r.k === "gap" ? `<div class="pr"><div class="pk"></div><div class="pw"></div></div>`
     : r.k === "sum" ? `<div class="psum"><div class="pst"><b>📝 ${esc(r.t)} 요약 3줄</b> <span>— 책 덮고 이 부분 핵심을 세 줄로</span></div>${[0, 1, 2].map(i => `<div class="psl">${txt((N.s[r.q] || [])[i])}</div>`).join("")}</div>`
     : `<div class="pr${withText ? " fill" : ""}"><div class="pk l${r.lv}${fits(r.t, r.lv) ? "" : " lng"}">${esc(r.t)}</div><div class="pw">${txt(N.r[r.q])}</div></div>`).join("")}</div>`;
